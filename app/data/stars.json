@@ -1,0 +1,22 @@
+[
+  { "name": "Proxima Centauri", "distanceLy": 4.2465 },
+  { "name": "Alpha Centauri A", "distanceLy": 4.3650 },
+  { "name": "Alpha Centauri B", "distanceLy": 4.3650 },
+  { "name": "Barnard's Star", "distanceLy": 5.9630 },
+  { "name": "Luhman 16", "distanceLy": 6.5030 },
+  { "name": "WISE 0855−0714", "distanceLy": 7.4300 },
+  { "name": "Wolf 359", "distanceLy": 7.8600 },
+  { "name": "Lalande 21185", "distanceLy": 8.3040 },
+  { "name": "Sirius", "distanceLy": 8.5828 },
+  { "name": "Luyten 726-8", "distanceLy": 8.7300 },
+  { "name": "Ross 154", "distanceLy": 9.7000 },
+  { "name": "Ross 248", "distanceLy": 10.3220 },
+  { "name": "Epsilon Eridani", "distanceLy": 10.4740 },
+  { "name": "Lacaille 9352", "distanceLy": 10.7420 },
+  { "name": "Ross 128", "distanceLy": 11.0070 },
+  { "name": "EZ Aquarii", "distanceLy": 11.1040 },
+  { "name": "Procyon", "distanceLy": 11.4630 },
+  { "name": "61 Cygni", "distanceLy": 11.4030 },
+  { "name": "Tau Ceti", "distanceLy": 11.9050 },
+  { "name": "Groombridge 34", "distanceLy": 11.6170 }
+]

@@ -1,0 +1,50 @@
+[
+  {
+    "id": "falcon-9-second-stage",
+    "name": "Falcon 9 (2nd stage, dry)",
+    "massKg": 4000,
+    "maxAccelG": 3.5,
+    "image": "/ships/rocket.svg",
+    "note": "Approximate dry mass."
+  },
+  {
+    "id": "crew-dragon",
+    "name": "Crew Dragon (dry)",
+    "massKg": 12000,
+    "maxAccelG": 2.5,
+    "image": "/ships/capsule.svg",
+    "note": "Approximate dry mass."
+  },
+  {
+    "id": "orion",
+    "name": "Orion crew module (dry)",
+    "massKg": 10300,
+    "maxAccelG": 3,
+    "image": "/ships/capsule.svg",
+    "note": "Approximate dry mass."
+  },
+  {
+    "id": "starship-dry",
+    "name": "Starship (dry est.)",
+    "massKg": 120000,
+    "maxAccelG": 3,
+    "image": "/ships/rocket.svg",
+    "note": "Rough public estimate."
+  },
+  {
+    "id": "iss",
+    "name": "International Space Station",
+    "massKg": 420000,
+    "maxAccelG": 0.05,
+    "image": "/ships/station.svg",
+    "note": "Total mass in orbit."
+  },
+  {
+    "id": "voyager-1",
+    "name": "Voyager 1",
+    "massKg": 722,
+    "maxAccelG": 0.01,
+    "image": "/ships/probe.svg",
+    "note": "Launch mass."
+  }
+]
