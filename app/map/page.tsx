@@ -7,6 +7,7 @@ import bodies from "../data/bodies.json";
 import { ThreeMap } from "../../components/ThreeMap";
 import { Map2D } from "../../components/Map2D";
 import { getBodyIcon } from "../../lib/icons";
+import { useVerified } from "../../components/VerifiedProvider";
 import type { Body } from "../../components/TargetMap";
 
 const groups = [
@@ -22,8 +23,9 @@ const groups = [
 const views = [
   { id: "all", label: "All" },
   { id: "solar", label: "Solar System" },
-  { id: "local", label: "Local Stars" },
-  { id: "galactic", label: "Galaxies" }
+  { id: "milky", label: "Milky Way" },
+  { id: "local-group", label: "Local Group" },
+  { id: "galaxies", label: "Galaxies" }
 ];
 
 type Enriched = {
@@ -35,18 +37,20 @@ type Enriched = {
 
 export default function MapPage() {
   const searchParams = useSearchParams();
+  const { verified } = useVerified();
   const baseBodies = useMemo(() => bodies as Body[], []);
   const [extraBodies, setExtraBodies] = useState<Body[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>("earth");
   const [mode, setMode] = useState<"3d" | "2d">("3d");
   const [zoom2d, setZoom2d] = useState(1);
-  const [verified, setVerified] = useState(false);
   const [fullscreen, setFullscreen] = useState(false);
   const mapRef = useRef<HTMLDivElement | null>(null);
-  const [panelTab, setPanelTab] = useState<"info" | "list">("info");
+  const [panelTab, setPanelTab] = useState<"info" | "list" | "discoveries">("info");
   const [query, setQuery] = useState("");
   const [view, setView] = useState<(typeof views)[number]["id"]>("all");
   const [focusTick, setFocusTick] = useState(0);
+  const [focusPathActive, setFocusPathActive] = useState(false);
+  const [focusPathIndex, setFocusPathIndex] = useState(0);
   const [enabled, setEnabled] = useState<Record<string, boolean>>({
     planets: true,
     moons: true,
@@ -57,6 +61,10 @@ export default function MapPage() {
     black: true
   });
   const [enriched, setEnriched] = useState<Record<string, Enriched>>({});
+  const [discoveries, setDiscoveries] = useState<Body[]>([]);
+  const [collections, setCollections] = useState<
+    { id: string; name: string; createdAt: string; items: Body[] }[]
+  >([]);
 
   useEffect(() => {
     const raw = localStorage.getItem("cj-extra-bodies");
@@ -68,6 +76,25 @@ export default function MapPage() {
     }
   }, []);
 
+  useEffect(() => {
+    const raw = localStorage.getItem("cj-discovery-collections");
+    if (!raw) return;
+    try {
+      setCollections(JSON.parse(raw));
+    } catch {
+      setCollections([]);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetch("/api/discoveries")
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (!data?.items) return;
+        setDiscoveries(data.items);
+      });
+  }, []);
+
   const allBodies = [...baseBodies, ...extraBodies];
 
   const filtered = allBodies.filter((body) => {
@@ -77,9 +104,10 @@ export default function MapPage() {
   });
 
   const viewFiltered = filtered.filter((body) => {
-    if (view === "solar") return body.distanceAuFromEarthAvg !== undefined;
-    if (view === "local") return body.distanceLy !== undefined && body.distanceLy <= 50;
-    if (view === "galactic") return body.type === "galaxy" || body.type === "black-hole";
+    if (view === "solar") return body.distanceAuFromEarthAvg !== undefined || body.id === "sun";
+    if (view === "milky") return body.distanceLy !== undefined && body.distanceLy <= 100000;
+    if (view === "local-group") return body.distanceLy !== undefined && body.distanceLy <= 4000000;
+    if (view === "galaxies") return body.type === "galaxy" || body.type === "black-hole";
     return true;
   });
 
@@ -116,19 +144,67 @@ export default function MapPage() {
   useEffect(() => {
     function handleChange() {
       setFullscreen(Boolean(document.fullscreenElement));
+      window.dispatchEvent(new Event("resize"));
     }
     document.addEventListener("fullscreenchange", handleChange);
     return () => document.removeEventListener("fullscreenchange", handleChange);
   }, []);
 
-  const info = selected ? enriched[selected.id] : null;
+  const focusList = useMemo(() => {
+    return [...viewFiltered].sort((a, b) => {
+      const aDist = a.distanceAuFromEarthAvg ?? a.distanceLy ?? 999999;
+      const bDist = b.distanceAuFromEarthAvg ?? b.distanceLy ?? 999999;
+      return aDist - bDist;
+    });
+  }, [viewFiltered]);
+
+  useEffect(() => {
+    if (!focusPathActive || focusList.length === 0) return;
+    let index = focusPathIndex % focusList.length;
+    setSelectedId(focusList[index].id);
+    setFocusTick((prev) => prev + 1);
+    const interval = window.setInterval(() => {
+      index = (index + 1) % focusList.length;
+      setFocusPathIndex(index);
+      setSelectedId(focusList[index].id);
+      setFocusTick((prev) => prev + 1);
+    }, 3800);
+    return () => window.clearInterval(interval);
+  }, [focusPathActive, focusList, focusPathIndex]);
+
+  const info = verified && selected ? enriched[selected.id] : null;
+
+  const mergeExtraBodies = (items: Body[]) => {
+    const map = new Map(extraBodies.map((body) => [body.id, body]));
+    items.forEach((item) => {
+      if (!map.has(item.id)) {
+        map.set(item.id, item);
+      }
+    });
+    const merged = Array.from(map.values());
+    setExtraBodies(merged);
+    localStorage.setItem("cj-extra-bodies", JSON.stringify(merged));
+  };
+
+  const saveCollection = () => {
+    if (!discoveries.length) return;
+    const entry = {
+      id: `collection-${Date.now()}`,
+      name: `Recent discoveries ${new Date().toLocaleDateString()}`,
+      createdAt: new Date().toISOString(),
+      items: discoveries
+    };
+    const next = [entry, ...collections].slice(0, 6);
+    setCollections(next);
+    localStorage.setItem("cj-discovery-collections", JSON.stringify(next));
+  };
 
   return (
     <div className="min-h-screen px-6 pb-16 md:px-16">
       <div className="mx-auto flex max-w-6xl flex-col gap-6">
         <header className="flex flex-col gap-4">
           <p className="text-sm uppercase tracking-[0.3em] text-white/60">Map</p>
-          <h1 className="text-3xl font-display text-gradient md:text-4xl">Celestial map</h1>
+          <h1 className="text-2xl font-display text-gradient md:text-3xl">Celestial map</h1>
           <p className="text-lg text-white/70">
             Explore targets in 2D or 3D. Toggle object groups and zoom to select.
           </p>
@@ -217,18 +293,15 @@ export default function MapPage() {
           >
             Deselect all
           </button>
-          <button
-            className={`rounded-full border px-3 py-1 text-xs uppercase tracking-widest ${
-              verified ? "border-star-500 text-star-500" : "border-white/20 text-white/60"
-            }`}
-            onClick={() => setVerified((prev) => !prev)}
-          >
-            Verified {verified ? "On" : "Off"}
-          </button>
         </div>
 
         <div className="grid gap-6 lg:grid-cols-[2.2fr_1fr]">
-          <div ref={mapRef} className={fullscreen ? "h-screen w-screen" : "h-[70vh] min-h-[520px]"}>
+          <div
+            ref={mapRef}
+            className={
+              fullscreen ? "fixed inset-0 z-50 p-6" : "h-[70vh] min-h-[520px]"
+            }
+          >
             {mode === "3d" ? (
               <ThreeMap
                 bodies={viewFiltered}
@@ -273,6 +346,17 @@ export default function MapPage() {
                 Focus selected
               </button>
               <button
+                className={`rounded-full border px-3 py-1 text-xs uppercase tracking-widest ${
+                  focusPathActive ? "border-star-500 text-star-500" : "border-white/20 text-white/70"
+                }`}
+                onClick={() => {
+                  setFocusPathIndex(0);
+                  setFocusPathActive((prev) => !prev);
+                }}
+              >
+                {focusPathActive ? "Stop focus path" : "Start focus path"}
+              </button>
+              <button
                 className="rounded-full border border-white/20 px-3 py-1 text-xs uppercase tracking-widest"
                 onClick={() => {
                   if (!mapRef.current) return;
@@ -309,6 +393,16 @@ export default function MapPage() {
               >
                 List
               </button>
+              <button
+                className={`rounded-full border px-3 py-1 text-xs uppercase tracking-widest ${
+                  panelTab === "discoveries"
+                    ? "border-star-500 text-star-500"
+                    : "border-white/15 text-white/60"
+                }`}
+                onClick={() => setPanelTab("discoveries")}
+              >
+                Discoveries
+              </button>
             </div>
             {panelTab === "list" ? (
               <div className="mt-4 space-y-3">
@@ -337,6 +431,67 @@ export default function MapPage() {
                       </button>
                     ))}
                 </div>
+              </div>
+            ) : panelTab === "discoveries" ? (
+              <div className="mt-4 space-y-4 text-sm text-white/70">
+                <div className="flex items-center justify-between">
+                  <p className="text-sm text-white/70">Recent discoveries from Wikidata.</p>
+                  <button
+                    className="rounded-full border border-white/20 px-3 py-1 text-xs uppercase tracking-widest text-white/70"
+                    onClick={saveCollection}
+                  >
+                    Save as collection
+                  </button>
+                </div>
+                <div className="space-y-2">
+                  {discoveries.map((body) => (
+                    <div
+                      key={body.id}
+                      className={`flex items-center justify-between rounded-2xl border px-3 py-2 text-left text-sm ${
+                        selectedId === body.id
+                          ? "border-star-500 bg-star-500/10"
+                          : "border-white/10 hover:border-white/30"
+                      }`}
+                    >
+                      <button
+                        onClick={() => {
+                          mergeExtraBodies([body]);
+                          setSelectedId(body.id);
+                        }}
+                      >
+                        {body.name}
+                      </button>
+                      <button
+                        className="text-xs text-star-500"
+                        onClick={() => {
+                          mergeExtraBodies([body]);
+                          setSelectedId(body.id);
+                        }}
+                      >
+                        Add
+                      </button>
+                    </div>
+                  ))}
+                </div>
+                {collections.length ? (
+                  <div className="space-y-3 border-t border-white/10 pt-4">
+                    <p className="text-xs uppercase tracking-widest text-white/50">Collections</p>
+                    {collections.map((collection) => (
+                      <div key={collection.id} className="rounded-2xl border border-white/10 p-3">
+                        <p className="text-sm text-white">{collection.name}</p>
+                        <p className="text-xs text-white/50">{collection.items.length} objects</p>
+                        <div className="mt-2 flex gap-3 text-xs">
+                          <button
+                            className="text-star-500"
+                            onClick={() => mergeExtraBodies(collection.items)}
+                          >
+                            Add to map
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : null}
               </div>
             ) : selected ? (
               <div className="mt-4 flex flex-col gap-4">

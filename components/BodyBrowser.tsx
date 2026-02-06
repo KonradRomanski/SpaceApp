@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import type { Body } from "./TargetMap";
 import { getBodyIcon } from "../lib/icons";
+import { useVerified } from "./VerifiedProvider";
 
 const typeFilters = ["all", "planet", "moon", "star", "dwarf-planet", "asteroid", "galaxy", "black-hole"] as const;
 
@@ -21,8 +22,6 @@ type BodyBrowserProps = {
   title: string;
   detailsLabel: string;
   searchPlaceholder: string;
-  verified: boolean;
-  onToggleVerified: () => void;
 };
 
 export function BodyBrowser({
@@ -31,10 +30,9 @@ export function BodyBrowser({
   onSelect,
   title,
   detailsLabel,
-  searchPlaceholder,
-  verified,
-  onToggleVerified
+  searchPlaceholder
 }: BodyBrowserProps) {
+  const { verified } = useVerified();
   const [enriched, setEnriched] = useState<Record<string, Enriched>>({});
   const [loading, setLoading] = useState(false);
   const [query, setQuery] = useState("");
@@ -74,24 +72,13 @@ export function BodyBrowser({
       .finally(() => setLoading(false));
   }, [selectedBody, enriched, verified]);
 
-  const active = selectedBody ? enriched[selectedBody.id] : null;
+  const active = verified && selectedBody ? enriched[selectedBody.id] : null;
 
   return (
     <section className="glass card">
       <div className="flex items-center justify-between">
         <h3 className="text-lg font-display text-star-500">{title}</h3>
-        <div className="flex items-center gap-3">
-          {loading ? <span className="text-xs text-white/60">Loading...</span> : null}
-          <button
-            type="button"
-            onClick={onToggleVerified}
-            className={`rounded-full border px-3 py-1 text-xs uppercase tracking-widest ${
-              verified ? "border-star-500 text-star-500" : "border-white/20 text-white/60"
-            }`}
-          >
-            Verified {verified ? "On" : "Off"}
-          </button>
-        </div>
+        {loading ? <span className="text-xs text-white/60">Loading...</span> : null}
       </div>
       <div className="mt-4 grid gap-4 lg:grid-cols-[1fr_1.2fr]">
         <div className="space-y-3">

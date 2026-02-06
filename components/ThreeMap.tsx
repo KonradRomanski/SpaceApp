@@ -40,6 +40,7 @@ export function ThreeMap({ bodies, selectedId, onSelect, className, focusTargetI
     const solar = bodies.filter(
       (b) => b.distanceAuFromEarthAvg !== undefined && b.id !== "sun"
     );
+    const sunBody = bodies.find((b) => b.id === "sun");
     const stars = bodies.filter((b) => b.distanceLy !== undefined && b.type === "star");
     const galaxies = bodies.filter((b) => b.distanceLy !== undefined && (b.type === "galaxy" || b.type === "black-hole"));
     const catalog = bodies.filter(
@@ -106,7 +107,14 @@ export function ThreeMap({ bodies, selectedId, onSelect, className, focusTargetI
         };
       }),
       orbitRadii: planetOrbits.map((au) => mapLog(au, 0.001, 40, 4, 26)),
-      beltRadius: mapLog(2.8, 0.001, 40, 4, 26)
+      beltRadius: mapLog(2.8, 0.001, 40, 4, 26),
+      sun: sunBody
+        ? {
+            ...sunBody,
+            position: new THREE.Vector3(0, 0, 0),
+            group: "sun"
+          }
+        : null
     };
   }, [bodies]);
 
@@ -132,12 +140,23 @@ export function ThreeMap({ bodies, selectedId, onSelect, className, focusTargetI
         <color attach="background" args={["#00040C"]} />
         <ambientLight intensity={0.7} />
         <pointLight position={[10, 20, 10]} intensity={1.4} />
-        <OrbitControls ref={controlsRef} enableZoom enablePan maxDistance={500} minDistance={10} />
+        <OrbitControls
+          ref={controlsRef}
+          enableZoom
+          enablePan
+          enableDamping
+          dampingFactor={0.08}
+          maxDistance={500}
+          minDistance={10}
+        />
 
-        <mesh onClick={() => onSelect({ id: "sun", name: "Sun", type: "star", description: "The star at the center of our solar system." } as any)}>
-          <sphereGeometry args={[2.4, 32, 32]} />
-          <meshStandardMaterial color="#FFD700" emissive="#FFD700" emissiveIntensity={0.4} />
-        </mesh>
+        {points.sun ? (
+          <SunMarker
+            body={points.sun}
+            isSelected={points.sun.id === selectedId}
+            onSelect={onSelect}
+          />
+        ) : null}
 
         {points.orbitRadii.map((radius) => (
           <OrbitRing key={`orbit-${radius}`} radius={radius} color="rgba(0,191,255,0.25)" />
@@ -242,6 +261,55 @@ function BodyMarker({
           onClick={() => onSelect(body)}
         >
           <img src={icon} alt="icon" className="h-4 w-4" />
+          {body.name}
+        </button>
+      </Html>
+    </group>
+  );
+}
+
+function SunMarker({
+  body,
+  isSelected,
+  onSelect
+}: {
+  body: Body & { position: THREE.Vector3 };
+  isSelected: boolean;
+  onSelect: (body: Body) => void;
+}) {
+  const ringRef = useRef<THREE.Mesh>(null);
+
+  useFrame(({ clock }) => {
+    if (!ringRef.current) return;
+    const scale = isSelected ? 1 + Math.sin(clock.elapsedTime * 2) * 0.08 : 1;
+    ringRef.current.scale.set(scale, scale, scale);
+    ringRef.current.visible = isSelected;
+  });
+
+  return (
+    <group position={body.position}>
+      <mesh onClick={() => onSelect(body)}>
+        <sphereGeometry args={[2.6, 32, 32]} />
+        <meshStandardMaterial color="#FFD700" emissive="#FFD700" emissiveIntensity={0.6} />
+      </mesh>
+      <mesh onClick={() => onSelect(body)}>
+        <sphereGeometry args={[4.6, 12, 12]} />
+        <meshBasicMaterial transparent opacity={0} />
+      </mesh>
+      <mesh ref={ringRef}>
+        <torusGeometry args={[3.4, 0.1, 16, 48]} />
+        <meshStandardMaterial color="#FFFFFF" emissive="#FFD700" emissiveIntensity={0.8} />
+      </mesh>
+      <Html distanceFactor={9}>
+        <button
+          className={`flex items-center gap-2 rounded-full border px-3 py-1 text-xs ${
+            isSelected
+              ? "border-star-500 bg-star-500/20 text-white"
+              : "border-white/20 bg-space-800/70 text-white/80"
+          }`}
+          onClick={() => onSelect(body)}
+        >
+          <img src={getBodyIcon(body)} alt="icon" className="h-4 w-4" />
           {body.name}
         </button>
       </Html>

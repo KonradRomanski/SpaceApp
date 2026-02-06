@@ -93,7 +93,6 @@ export function Calculator() {
   const [fuelCostPerKgUsd, setFuelCostPerKgUsd] = useState(1000);
   const [currency, setCurrency] = useState("USD");
   const [fxRates, setFxRates] = useState<Record<string, number>>({});
-  const [verifiedMode, setVerifiedMode] = useState(false);
   const [selectedShip, setSelectedShip] = useState("custom");
   const [selectedBodyId, setSelectedBodyId] = useState<string | null>(
     "proxima-centauri"
@@ -247,8 +246,6 @@ export function Calculator() {
               title={t.bodyBrowserTitle}
               detailsLabel={t.details}
               searchPlaceholder={t.searchBody}
-              verified={verifiedMode}
-              onToggleVerified={() => setVerifiedMode((prev) => !prev)}
             />
 
             <div className="flex flex-col gap-2">

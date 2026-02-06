@@ -34,6 +34,7 @@ type Map2DProps = {
 export function Map2D({ bodies, selectedId, onSelect, className, zoom, onZoomChange }: Map2DProps) {
   const points = useMemo(() => {
     const solar = bodies.filter((b) => b.distanceAuFromEarthAvg !== undefined && b.id !== "sun");
+    const sunBody = bodies.find((b) => b.id === "sun");
     const stars = bodies.filter((b) => b.distanceLy !== undefined && b.type === "star");
     const galaxies = bodies.filter((b) => b.distanceLy !== undefined && (b.type === "galaxy" || b.type === "black-hole"));
     const catalog = bodies.filter(
@@ -75,7 +76,14 @@ export function Map2D({ bodies, selectedId, onSelect, className, zoom, onZoomCha
           x: 420 + Math.cos(angle) * 420,
           y: 420 + Math.sin(angle) * 420
         };
-      })
+      }),
+      sun: sunBody
+        ? {
+            ...sunBody,
+            x: 260,
+            y: 260
+          }
+        : null
     };
   }, [bodies]);
 
@@ -84,6 +92,7 @@ export function Map2D({ bodies, selectedId, onSelect, className, zoom, onZoomCha
     points.stars.find((b) => b.id === selectedId) ||
     points.galaxies.find((b) => b.id === selectedId) ||
     points.catalog.find((b) => b.id === selectedId) ||
+    (points.sun && points.sun.id === selectedId ? points.sun : null) ||
     null;
   const baseSize = 840;
   const viewSize = baseSize / Math.max(0.6, Math.min(zoom, 3));
@@ -112,9 +121,12 @@ export function Map2D({ bodies, selectedId, onSelect, className, zoom, onZoomCha
           <circle key={`solar-${r}`} cx="260" cy="260" r={r} fill="none" stroke="rgba(0,191,255,0.12)" />
         ))}
 
-        <g onClick={() => onSelect({ id: "sun", name: "Sun", type: "star", description: "The star at the center of our solar system." } as any)} className="cursor-pointer">
-          <circle cx="260" cy="260" r={12} fill="#FFD700" />
-        </g>
+        {points.sun ? (
+          <g onClick={() => onSelect(points.sun as any)} className="cursor-pointer">
+            <circle cx={points.sun.x} cy={points.sun.y} r={14} fill="#FFD700" />
+            <image href={getBodyIcon(points.sun)} x={points.sun.x - 10} y={points.sun.y - 10} width={20} height={20} />
+          </g>
+        ) : null}
 
         {[260, 310, 360].map((r) => (
           <circle key={`star-${r}`} cx="420" cy="420" r={r} fill="none" stroke="rgba(255,215,0,0.08)" />

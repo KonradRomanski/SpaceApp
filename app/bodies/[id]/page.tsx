@@ -5,21 +5,43 @@ import Link from "next/link";
 import bodies from "../../data/bodies.json";
 import type { Body } from "../../../components/TargetMap";
 import { getBodyIcon } from "../../../lib/icons";
+import { useVerified } from "../../../components/VerifiedProvider";
 
 export default function BodyDetailPage({ params }: { params: { id: string } }) {
-  const allBodies = useMemo(() => bodies as Body[], []);
+  const formatNumber = (value: number) =>
+    value.toLocaleString("en-US", { maximumSignificantDigits: 4 });
+  const baseBodies = useMemo(() => bodies as Body[], []);
+  const [extraBodies, setExtraBodies] = useState<Body[]>([]);
+  const allBodies = useMemo(() => [...baseBodies, ...extraBodies], [baseBodies, extraBodies]);
   const body = allBodies.find((item) => item.id === params.id);
   const [info, setInfo] = useState<{ image: string | null; description: string | null; wikiUrl: string | null; facts?: Record<string, string | null> } | null>(null);
+  const { verified } = useVerified();
 
   useEffect(() => {
-    if (!body) return;
+    const raw = localStorage.getItem("cj-extra-bodies");
+    if (!raw) return;
+    try {
+      setExtraBodies(JSON.parse(raw));
+    } catch {
+      setExtraBodies([]);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!body || !verified) return;
     fetch(`/api/enrich?name=${encodeURIComponent(body.name)}&id=${body.id}`)
       .then((res) => (res.ok ? res.json() : null))
       .then((data) => {
         if (!data) return;
         setInfo({ image: data.image, description: data.description, wikiUrl: data.wikiUrl, facts: data.facts ?? undefined });
       });
-  }, [body]);
+  }, [body, verified]);
+
+  useEffect(() => {
+    if (!verified) {
+      setInfo(null);
+    }
+  }, [verified]);
 
   if (!body) {
     return (
@@ -62,6 +84,11 @@ export default function BodyDetailPage({ params }: { params: { id: string } }) {
 
         <section className="glass card">
           <h2 className="text-xl font-display text-star-500">Quick facts</h2>
+          {!verified ? (
+            <p className="mt-2 text-xs text-white/60">
+              Turn on Verified mode to load data from Wikipedia/Wikidata.
+            </p>
+          ) : null}
           <div className="mt-4 grid gap-4 md:grid-cols-2">
             {body.distanceLy !== undefined ? (
               <div>
@@ -75,22 +102,22 @@ export default function BodyDetailPage({ params }: { params: { id: string } }) {
                 <p className="text-lg font-semibold">{body.distanceAuFromEarthAvg} AU</p>
               </div>
             ) : null}
-            {body.radiusKm !== null ? (
+            {body.radiusKm != null ? (
               <div>
                 <p className="text-sm text-white/60">Radius</p>
-                <p className="text-lg font-semibold">{body.radiusKm} km</p>
+                <p className="text-lg font-semibold">{formatNumber(body.radiusKm)} km</p>
               </div>
             ) : null}
-            {body.massKg !== null ? (
+            {body.massKg != null ? (
               <div>
                 <p className="text-sm text-white/60">Mass</p>
-                <p className="text-lg font-semibold">{body.massKg?.toExponential(3)} kg</p>
+                <p className="text-lg font-semibold">{formatNumber(body.massKg)} kg</p>
               </div>
             ) : null}
-            {body.gravityMs2 !== null ? (
+            {body.gravityMs2 != null ? (
               <div>
                 <p className="text-sm text-white/60">Surface gravity</p>
-                <p className="text-lg font-semibold">{body.gravityMs2} m/s²</p>
+                <p className="text-lg font-semibold">{formatNumber(body.gravityMs2)} m/s²</p>
               </div>
             ) : null}
             {body.atmosphere ? (
@@ -111,13 +138,13 @@ export default function BodyDetailPage({ params }: { params: { id: string } }) {
                 <p className="text-lg font-semibold">{body.composition}</p>
               </div>
             ) : null}
-            {body.orbitalPeriodDays !== null ? (
+            {body.orbitalPeriodDays != null ? (
               <div>
                 <p className="text-sm text-white/60">Orbital period</p>
                 <p className="text-lg font-semibold">{body.orbitalPeriodDays} days</p>
               </div>
             ) : null}
-            {body.moons !== null ? (
+            {body.moons != null ? (
               <div>
                 <p className="text-sm text-white/60">Known moons</p>
                 <p className="text-lg font-semibold">{body.moons}</p>
