@@ -1,0 +1,16 @@
+version: "3.9"
+services:
+  db:
+    build:
+      context: ./docker/db
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: cosmicdb
+      POSTGRES_USER: cosmic
+      POSTGRES_PASSWORD: cosmic
+    volumes:
+      - cosmic-db:/var/lib/postgresql/data
+
+volumes:
+  cosmic-db:

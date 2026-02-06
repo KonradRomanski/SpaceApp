@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { ExpandableText } from "./ExpandableText";
+import { useToast } from "./ToastProvider";
 
 type DiscoverItem = {
   id: string;
@@ -28,7 +29,9 @@ export function DiscoverPanel({ onAdd, existing = [] }: DiscoverPanelProps) {
   const [view, setView] = useState<"grid" | "list">("grid");
   const [selected, setSelected] = useState<DiscoverItem | null>(null);
   const [status, setStatus] = useState<string | null>(null);
+  const [removingIds, setRemovingIds] = useState<Set<string>>(new Set());
   const controllerRef = useRef<AbortController | null>(null);
+  const toast = useToast();
 
   const existingIds = new Set(existing.map((item) => item.id));
   const existingNames = new Set(existing.map((item) => normalize(item.name)));
@@ -113,6 +116,9 @@ export function DiscoverPanel({ onAdd, existing = [] }: DiscoverPanelProps) {
                     key={item.id}
                     onClick={() => setSelected(item)}
                     className={`rounded-2xl border p-3 text-left ${
+                      removingIds.has(item.id)
+                        ? "opacity-40 transition-opacity duration-200"
+                        :
                       selected?.id === item.id
                         ? "border-star-500 bg-star-500/10"
                         : "border-white/10 hover:border-white/30"
@@ -161,8 +167,17 @@ export function DiscoverPanel({ onAdd, existing = [] }: DiscoverPanelProps) {
                             className="text-xs text-star-500"
                             onClick={() => {
                               onAdd([item], type);
-                              setItems((prev) => prev.filter((row) => row.id !== item.id));
+                              setRemovingIds((prev) => new Set(prev).add(item.id));
+                              setTimeout(() => {
+                                setItems((prev) => prev.filter((row) => row.id !== item.id));
+                                setRemovingIds((prev) => {
+                                  const next = new Set(prev);
+                                  next.delete(item.id);
+                                  return next;
+                                });
+                              }, 250);
                               markStatus(`Added ${item.name}.`);
+                              toast.push(`Added ${item.name}`);
                             }}
                           >
                             Add
@@ -192,8 +207,17 @@ export function DiscoverPanel({ onAdd, existing = [] }: DiscoverPanelProps) {
                     className="text-star-500"
                     onClick={() => {
                       onAdd([selected], type);
-                      setItems((prev) => prev.filter((item) => item.id !== selected.id));
+                      setRemovingIds((prev) => new Set(prev).add(selected.id));
+                      setTimeout(() => {
+                        setItems((prev) => prev.filter((item) => item.id !== selected.id));
+                        setRemovingIds((prev) => {
+                          const next = new Set(prev);
+                          next.delete(selected.id);
+                          return next;
+                        });
+                      }, 250);
                       markStatus(`Added ${selected.name}.`);
+                      toast.push(`Added ${selected.name}`);
                     }}
                   >
                     Add to explorer
@@ -215,6 +239,7 @@ export function DiscoverPanel({ onAdd, existing = [] }: DiscoverPanelProps) {
             setItems([]);
             setSelected(null);
             markStatus("Added all items.");
+            toast.push("Added all items");
           }}
           className="mt-4 rounded-full border border-star-500 px-4 py-2 text-xs uppercase tracking-widest text-star-500"
         >

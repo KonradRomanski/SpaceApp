@@ -4,6 +4,7 @@ import { Space_Grotesk, Work_Sans } from "next/font/google";
 import { NavBar } from "../components/NavBar";
 import { VerifiedProvider } from "../components/VerifiedProvider";
 import { LocaleProvider } from "../components/LocaleProvider";
+import { ToastProvider } from "../components/ToastProvider";
 
 const spaceGrotesk = Space_Grotesk({
   subsets: ["latin"],
@@ -30,8 +31,10 @@ export default function RootLayout({
       <body>
         <VerifiedProvider>
           <LocaleProvider>
-            <NavBar />
-            {children}
+            <ToastProvider>
+              <NavBar />
+              {children}
+            </ToastProvider>
           </LocaleProvider>
         </VerifiedProvider>
       </body>

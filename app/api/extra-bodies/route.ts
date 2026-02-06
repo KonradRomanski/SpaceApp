@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { addExtraBodies, listExtraBodies } from "../../../lib/db";
 
 export async function GET() {
-  const rows = listExtraBodies();
+  const rows = await listExtraBodies();
   const items = rows.map((row: any) => ({
     id: row.id,
     name: row.name,
@@ -23,6 +23,6 @@ export async function POST(request: Request) {
   if (!items.length) {
     return NextResponse.json({ error: "No items" }, { status: 400 });
   }
-  addExtraBodies(items);
+  await addExtraBodies(items);
   return NextResponse.json({ added: items.map((item: any) => item.id) });
 }

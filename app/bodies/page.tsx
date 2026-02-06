@@ -6,6 +6,7 @@ import bodies from "../data/bodies.json";
 import type { Body } from "../../components/TargetMap";
 import { getBodyIcon } from "../../lib/icons";
 import { DiscoverPanel } from "../../components/DiscoverPanel";
+import { useToast } from "../../components/ToastProvider";
 
 const types = ["all", "planet", "moon", "star", "dwarf-planet", "asteroid", "galaxy", "black-hole"] as const;
 const sorts = [
@@ -30,6 +31,8 @@ export default function BodiesPage() {
   const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
   const [view, setView] = useState<"grid" | "list">("grid");
   const [system, setSystem] = useState<"all" | "solar" | "interstellar">("all");
+  const [removingIds, setRemovingIds] = useState<Set<string>>(new Set());
+  const toast = useToast();
 
   function isNew(createdAt?: string) {
     if (!createdAt) return false;
@@ -71,8 +74,17 @@ export default function BodiesPage() {
   }
 
   async function removeExtra(id: string) {
+    setRemovingIds((prev) => new Set(prev).add(id));
     await fetch(`/api/extra-bodies/${id}`, { method: "DELETE" });
-    setExtraBodies((prev) => prev.filter((body) => body.id !== id));
+    setTimeout(() => {
+      setExtraBodies((prev) => prev.filter((body) => body.id !== id));
+      setRemovingIds((prev) => {
+        const next = new Set(prev);
+        next.delete(id);
+        return next;
+      });
+    }, 250);
+    toast.push("Removed body");
   }
 
   const allBodies = [...baseBodies, ...extraBodies];
@@ -179,7 +191,9 @@ export default function BodiesPage() {
               <Link
                 key={body.id}
                 href={`/bodies/${body.id}`}
-                className="glass card transition hover:-translate-y-1"
+                className={`glass card transition hover:-translate-y-1 ${
+                  removingIds.has(body.id) ? "opacity-40" : ""
+                }`}
               >
                 <div className="flex items-center gap-3">
                   <img src={getBodyIcon(body)} alt="icon" className="h-10 w-10" />
@@ -219,7 +233,12 @@ export default function BodiesPage() {
               </thead>
               <tbody>
                 {filtered.map((body) => (
-                  <tr key={body.id} className="border-t border-white/10">
+                  <tr
+                    key={body.id}
+                    className={`border-t border-white/10 ${
+                      removingIds.has(body.id) ? "opacity-40" : ""
+                    }`}
+                  >
                     <td className="p-3">
                       <div className="flex items-center gap-3">
                         <Link href={`/bodies/${body.id}`} className="text-star-500">

@@ -10,6 +10,7 @@ import { getBodyIcon } from "../../lib/icons";
 import { useVerified } from "../../components/VerifiedProvider";
 import type { Body } from "../../components/TargetMap";
 import { ExpandableText } from "../../components/ExpandableText";
+import { useToast } from "../../components/ToastProvider";
 
 const groups = [
   { id: "planets", label: "Planets", filter: (b: Body) => b.type === "planet" },
@@ -68,6 +69,7 @@ export default function MapPage() {
     black: true
   });
   const [enriched, setEnriched] = useState<Record<string, Enriched>>({});
+  const toast = useToast();
   const [discoveries, setDiscoveries] = useState<Body[]>([]);
   const [collections, setCollections] = useState<
     { id: string; name: string; createdAt: string; items: Body[] }[]
@@ -202,6 +204,7 @@ export default function MapPage() {
   async function removeExtra(id: string) {
     await fetch(`/api/extra-bodies/${id}`, { method: "DELETE" });
     setExtraBodies((prev) => prev.filter((body) => body.id !== id));
+    toast.push("Removed body");
   }
 
   const saveCollection = () => {

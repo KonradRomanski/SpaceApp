@@ -5,6 +5,6 @@ export async function DELETE(request: Request, { params }: { params: { id: strin
   if (!params.id) {
     return NextResponse.json({ error: "Missing id" }, { status: 400 });
   }
-  removeExtraBody(params.id);
+  await removeExtraBody(params.id);
   return NextResponse.json({ ok: true });
 }
