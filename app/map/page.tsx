@@ -74,13 +74,12 @@ export default function MapPage() {
   >([]);
 
   useEffect(() => {
-    const raw = localStorage.getItem("cj-extra-bodies");
-    if (!raw) return;
-    try {
-      setExtraBodies(JSON.parse(raw));
-    } catch {
-      setExtraBodies([]);
-    }
+    fetch("/api/extra-bodies")
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (!data?.items) return;
+        setExtraBodies(data.items);
+      });
   }, []);
 
   useEffect(() => {
@@ -188,17 +187,22 @@ export default function MapPage() {
 
   const info = verified && selected ? enriched[selected.id] : null;
 
-  const mergeExtraBodies = (items: Body[]) => {
-    const map = new Map(extraBodies.map((body) => [body.id, body]));
-    items.forEach((item) => {
-      if (!map.has(item.id)) {
-        map.set(item.id, item);
-      }
+  const mergeExtraBodies = async (items: Body[]) => {
+    await fetch("/api/extra-bodies", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ items })
     });
-    const merged = Array.from(map.values());
-    setExtraBodies(merged);
-    localStorage.setItem("cj-extra-bodies", JSON.stringify(merged));
+    setExtraBodies((prev) => {
+      const ids = new Set(prev.map((body) => body.id));
+      return [...prev, ...items.filter((item) => !ids.has(item.id))];
+    });
   };
+
+  async function removeExtra(id: string) {
+    await fetch(`/api/extra-bodies/${id}`, { method: "DELETE" });
+    setExtraBodies((prev) => prev.filter((body) => body.id !== id));
+  }
 
   const saveCollection = () => {
     if (!discoveries.length) return;
@@ -574,6 +578,14 @@ export default function MapPage() {
                   >
                     ESA
                   </a>
+                  {"createdAt" in selected ? (
+                    <button
+                      className="text-star-500"
+                      onClick={() => removeExtra(selected.id)}
+                    >
+                      Remove
+                    </button>
+                  ) : null}
                 </div>
               </div>
             ) : (

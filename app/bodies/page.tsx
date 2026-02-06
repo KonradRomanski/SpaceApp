@@ -31,17 +31,27 @@ export default function BodiesPage() {
   const [view, setView] = useState<"grid" | "list">("grid");
   const [system, setSystem] = useState<"all" | "solar" | "interstellar">("all");
 
+  function isNew(createdAt?: string) {
+    if (!createdAt) return false;
+    const created = new Date(createdAt).getTime();
+    if (Number.isNaN(created)) return false;
+    const days = (Date.now() - created) / (1000 * 60 * 60 * 24);
+    return days <= 7;
+  }
+
   useEffect(() => {
-    const raw = localStorage.getItem("cj-extra-bodies");
-    if (!raw) return;
-    try {
-      setExtraBodies(JSON.parse(raw));
-    } catch {
-      setExtraBodies([]);
-    }
+    fetch("/api/extra-bodies")
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (!data?.items) return;
+        setExtraBodies(data.items);
+      });
   }, []);
 
-  function addDiscovered(items: { id: string; name: string; image: string | null; description: string | null }[], type: string) {
+  async function addDiscovered(
+    items: { id: string; name: string; image: string | null; description: string | null }[],
+    type: string
+  ) {
     const mapped: Body[] = items.map((item) => ({
       id: item.id,
       name: item.name,
@@ -49,9 +59,20 @@ export default function BodiesPage() {
       description: item.description ?? "Discovered from Wikidata",
       imageOverride: item.image ?? undefined
     }));
-    const merged = [...extraBodies, ...mapped];
-    setExtraBodies(merged);
-    localStorage.setItem("cj-extra-bodies", JSON.stringify(merged));
+    await fetch("/api/extra-bodies", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ items: mapped })
+    });
+    setExtraBodies((prev) => {
+      const ids = new Set(prev.map((b) => b.id));
+      return [...prev, ...mapped.filter((m) => !ids.has(m.id))];
+    });
+  }
+
+  async function removeExtra(id: string) {
+    await fetch(`/api/extra-bodies/${id}`, { method: "DELETE" });
+    setExtraBodies((prev) => prev.filter((body) => body.id !== id));
   }
 
   const allBodies = [...baseBodies, ...extraBodies];
@@ -92,7 +113,7 @@ export default function BodiesPage() {
           </div>
         </header>
 
-        <DiscoverPanel onAdd={addDiscovered} />
+        <DiscoverPanel onAdd={addDiscovered} existing={allBodies} />
 
         <div className="flex flex-wrap gap-3">
           <input
@@ -175,6 +196,11 @@ export default function BodiesPage() {
                   {body.distanceAuFromEarthAvg !== undefined ? (
                     <span>Avg. distance from Earth: {body.distanceAuFromEarthAvg} AU</span>
                   ) : null}
+                  {"createdAt" in body && isNew((body as any).createdAt) ? (
+                    <span className="rounded-full border border-star-500 px-2 py-0.5 text-[10px] uppercase tracking-widest text-star-500">
+                      New
+                    </span>
+                  ) : null}
                 </div>
               </Link>
             ))}
@@ -188,6 +214,7 @@ export default function BodiesPage() {
                   <th className="p-3">Type</th>
                   <th className="p-3">Distance</th>
                   <th className="p-3">Temp (K)</th>
+                  <th className="p-3">Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -201,6 +228,11 @@ export default function BodiesPage() {
                         <Link href={`/map?focus=${body.id}`} className="text-xs text-white/60">
                           Map
                         </Link>
+                        {"createdAt" in body && isNew((body as any).createdAt) ? (
+                          <span className="rounded-full border border-star-500 px-2 py-0.5 text-[10px] uppercase tracking-widest text-star-500">
+                            New
+                          </span>
+                        ) : null}
                       </div>
                     </td>
                     <td className="p-3">{body.type}</td>
@@ -212,6 +244,16 @@ export default function BodiesPage() {
                         : "n/a"}
                     </td>
                     <td className="p-3">{body.temperatureK ?? "n/a"}</td>
+                    <td className="p-3">
+                      {"createdAt" in body ? (
+                        <button
+                          className="text-xs text-star-500"
+                          onClick={() => removeExtra(body.id)}
+                        >
+                          Remove
+                        </button>
+                      ) : null}
+                    </td>
                   </tr>
                 ))}
               </tbody>

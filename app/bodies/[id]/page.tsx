@@ -17,6 +17,7 @@ export default function BodyDetailPage({ params }: { params: { id: string } }) {
   const body = allBodies.find((item) => item.id === params.id);
   const [info, setInfo] = useState<{ image: string | null; description: string | null; wikiUrl: string | null; facts?: Record<string, string | null> } | null>(null);
   const { verified } = useVerified();
+  const isExtra = body && "createdAt" in (body as any);
 
   const isPresent = (value?: string | number | null) => {
     if (value === null || value === undefined) return false;
@@ -25,13 +26,12 @@ export default function BodyDetailPage({ params }: { params: { id: string } }) {
   };
 
   useEffect(() => {
-    const raw = localStorage.getItem("cj-extra-bodies");
-    if (!raw) return;
-    try {
-      setExtraBodies(JSON.parse(raw));
-    } catch {
-      setExtraBodies([]);
-    }
+    fetch("/api/extra-bodies")
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (!data?.items) return;
+        setExtraBodies(data.items);
+      });
   }, []);
 
   useEffect(() => {
@@ -244,6 +244,17 @@ export default function BodyDetailPage({ params }: { params: { id: string } }) {
             >
               ESA
             </a>
+            {isExtra ? (
+              <button
+                className="text-star-500"
+                onClick={async () => {
+                  await fetch(`/api/extra-bodies/${body.id}`, { method: "DELETE" });
+                  window.location.href = "/bodies";
+                }}
+              >
+                Remove
+              </button>
+            ) : null}
           </div>
         </section>
       </div>

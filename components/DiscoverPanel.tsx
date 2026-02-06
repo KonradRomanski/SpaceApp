@@ -12,17 +12,26 @@ type DiscoverItem = {
 
 type DiscoverPanelProps = {
   onAdd: (items: DiscoverItem[], type: string) => void;
+  existing?: { id: string; name: string }[];
 };
 
 const types = ["planet", "moon", "star", "galaxy", "black-hole", "asteroid", "dwarf-planet"] as const;
 
-export function DiscoverPanel({ onAdd }: DiscoverPanelProps) {
+function normalize(value: string) {
+  return value.toLowerCase().replace(/[^a-z0-9]+/g, "");
+}
+
+export function DiscoverPanel({ onAdd, existing = [] }: DiscoverPanelProps) {
   const [type, setType] = useState<(typeof types)[number]>("planet");
   const [items, setItems] = useState<DiscoverItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [view, setView] = useState<"grid" | "list">("grid");
   const [selected, setSelected] = useState<DiscoverItem | null>(null);
+  const [status, setStatus] = useState<string | null>(null);
   const controllerRef = useRef<AbortController | null>(null);
+
+  const existingIds = new Set(existing.map((item) => item.id));
+  const existingNames = new Set(existing.map((item) => normalize(item.name)));
 
   useEffect(() => {
     setItems([]);
@@ -40,10 +49,19 @@ export function DiscoverPanel({ onAdd }: DiscoverPanelProps) {
       .then((res) => (res.ok ? res.json() : null))
       .then((data) => {
         if (!data?.items) return;
-        setItems(data.items);
-        setSelected(data.items[0] ?? null);
+        const filtered = data.items.filter(
+          (item: DiscoverItem) =>
+            !existingIds.has(item.id) && !existingNames.has(normalize(item.name))
+        );
+        setItems(filtered);
+        setSelected(filtered[0] ?? null);
       })
       .finally(() => setLoading(false));
+  }
+
+  function markStatus(message: string) {
+    setStatus(message);
+    setTimeout(() => setStatus(null), 1600);
   }
 
   return (
@@ -84,6 +102,7 @@ export function DiscoverPanel({ onAdd }: DiscoverPanelProps) {
           </button>
         </div>
       </div>
+      {status ? <p className="mt-2 text-xs text-star-400">{status}</p> : null}
       {items.length ? (
         <div className="mt-4 grid gap-4 lg:grid-cols-[1fr_1.1fr]">
           <div className="space-y-3">
@@ -140,7 +159,11 @@ export function DiscoverPanel({ onAdd }: DiscoverPanelProps) {
                         <td className="p-3">
                           <button
                             className="text-xs text-star-500"
-                            onClick={() => onAdd([item], type)}
+                            onClick={() => {
+                              onAdd([item], type);
+                              setItems((prev) => prev.filter((row) => row.id !== item.id));
+                              markStatus(`Added ${item.name}.`);
+                            }}
                           >
                             Add
                           </button>
@@ -167,7 +190,11 @@ export function DiscoverPanel({ onAdd }: DiscoverPanelProps) {
                 <div className="flex gap-3 text-xs">
                   <button
                     className="text-star-500"
-                    onClick={() => onAdd([selected], type)}
+                    onClick={() => {
+                      onAdd([selected], type);
+                      setItems((prev) => prev.filter((item) => item.id !== selected.id));
+                      markStatus(`Added ${selected.name}.`);
+                    }}
                   >
                     Add to explorer
                   </button>
@@ -183,7 +210,12 @@ export function DiscoverPanel({ onAdd }: DiscoverPanelProps) {
       )}
       {items.length ? (
         <button
-          onClick={() => onAdd(items, type)}
+          onClick={() => {
+            onAdd(items, type);
+            setItems([]);
+            setSelected(null);
+            markStatus("Added all items.");
+          }}
           className="mt-4 rounded-full border border-star-500 px-4 py-2 text-xs uppercase tracking-widest text-star-500"
         >
           Add all to explorer
