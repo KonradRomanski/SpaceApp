@@ -7,7 +7,9 @@ const typeMap: Record<string, string> = {
   moon: "Q2537",
   star: "Q523",
   galaxy: "Q318",
-  "black-hole": "Q589"
+  "black-hole": "Q589",
+  asteroid: "Q3863",
+  "dwarf-planet": "Q15978631"
 };
 
 function buildQuery(qid: string, limit: number) {

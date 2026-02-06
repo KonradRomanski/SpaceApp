@@ -27,6 +27,7 @@ export default function BodiesPage() {
   const [filter, setFilter] = useState<(typeof types)[number]>("all");
   const [query, setQuery] = useState("");
   const [sort, setSort] = useState<(typeof sorts)[number]["id"]>("name");
+  const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
   const [view, setView] = useState<"grid" | "list">("grid");
   const [system, setSystem] = useState<"all" | "solar" | "interstellar">("all");
 
@@ -67,11 +68,12 @@ export default function BodiesPage() {
       return true;
     })
     .sort((a, b) => {
-      if (sort === "name") return a.name.localeCompare(b.name);
-      if (sort === "type") return a.type.localeCompare(b.type);
-      if (sort === "temperature") return (a.temperatureK ?? 0) - (b.temperatureK ?? 0);
-      if (sort === "distance") return distanceValue(a) - distanceValue(b);
-      return 0;
+      let compare = 0;
+      if (sort === "name") compare = a.name.localeCompare(b.name);
+      if (sort === "type") compare = a.type.localeCompare(b.type);
+      if (sort === "temperature") compare = (a.temperatureK ?? 0) - (b.temperatureK ?? 0);
+      if (sort === "distance") compare = distanceValue(a) - distanceValue(b);
+      return sortDir === "asc" ? compare : -compare;
     });
 
   return (
@@ -106,6 +108,12 @@ export default function BodiesPage() {
               </option>
             ))}
           </select>
+          <button
+            className="rounded-full border border-white/20 px-4 py-2 text-sm text-white/70"
+            onClick={() => setSortDir((prev) => (prev === "asc" ? "desc" : "asc"))}
+          >
+            {sortDir === "asc" ? "Asc" : "Desc"}
+          </button>
           <select value={system} onChange={(event) => setSystem(event.target.value as any)}>
             <option value="all">All systems</option>
             <option value="solar">Solar system</option>

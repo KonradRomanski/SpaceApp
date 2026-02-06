@@ -18,18 +18,21 @@ export function HomeGallery() {
   const [items, setItems] = useState<GalleryItem[]>([]);
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(false);
+  const [query, setQuery] = useState("nebula");
+
+  const queries = ["nebula", "galaxy", "planet", "mars", "saturn", "telescope", "astronaut"];
 
   useEffect(() => {
-    load("nebula", 1);
+    load(query, 1, true);
   }, []);
 
-  function load(query: string, nextPage: number) {
+  function load(q: string, nextPage: number, reset = false) {
     setLoading(true);
-    fetch(`/api/gallery?q=${encodeURIComponent(query)}&page=${nextPage}`)
+    fetch(`/api/gallery?q=${encodeURIComponent(q)}&page=${nextPage}&pageSize=18`)
       .then((res) => (res.ok ? res.json() : null))
       .then((data: Response | null) => {
         if (!data?.items) return;
-        setItems((prev) => [...prev, ...data.items]);
+        setItems((prev) => (reset ? data.items : [...prev, ...data.items]));
         setPage(nextPage);
       })
       .finally(() => setLoading(false));
@@ -40,11 +43,21 @@ export function HomeGallery() {
       <div className="flex items-center justify-between">
         <h2 className="text-xl font-display text-star-500">Gallery highlights</h2>
         <div className="flex gap-2">
+          <button
+            onClick={() => {
+              const next = queries[Math.floor(Math.random() * queries.length)];
+              setQuery(next);
+              load(next, 1, true);
+            }}
+            className="rounded-full border border-white/20 px-3 py-1 text-xs"
+          >
+            Refresh
+          </button>
           <a href="/gallery" className="rounded-full border border-white/20 px-3 py-1 text-xs">
             Open gallery
           </a>
           <button
-            onClick={() => load("galaxy", page + 1)}
+            onClick={() => load(query, page + 1)}
             className="rounded-full border border-white/20 px-3 py-1 text-xs"
           >
             {loading ? "Loading..." : "Load more"}

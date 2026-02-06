@@ -82,18 +82,18 @@ export default function HomePage() {
         <section className="glass card">
           <h2 className="text-xl font-display text-star-500">Getting started</h2>
           <div className="mt-4 grid gap-4 md:grid-cols-3">
-            <div className="rounded-2xl border border-white/10 p-4">
+            <Link href="/calculator" className="rounded-2xl border border-white/10 p-4">
               <p className="text-xs uppercase tracking-widest text-white/50">Step 1</p>
               <p className="mt-2 text-sm text-white/80">Open the Calculator and pick a ship preset.</p>
-            </div>
-            <div className="rounded-2xl border border-white/10 p-4">
+            </Link>
+            <Link href="/map" className="rounded-2xl border border-white/10 p-4">
               <p className="text-xs uppercase tracking-widest text-white/50">Step 2</p>
               <p className="mt-2 text-sm text-white/80">Explore targets in the Map and switch 2D/3D.</p>
-            </div>
-            <div className="rounded-2xl border border-white/10 p-4">
+            </Link>
+            <Link href="/facts" className="rounded-2xl border border-white/10 p-4">
               <p className="text-xs uppercase tracking-widest text-white/50">Step 3</p>
               <p className="mt-2 text-sm text-white/80">Read Cosmic Facts and save discoveries to the map.</p>
-            </div>
+            </Link>
           </div>
         </section>
 

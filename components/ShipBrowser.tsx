@@ -9,6 +9,7 @@ type Ship = {
   maxAccelG: number;
   image?: string;
   note: string;
+  sources?: { label: string; url: string }[];
 };
 
 type ShipBrowserProps = {
@@ -71,30 +72,17 @@ export function ShipBrowser({ ships, selectedId, onSelect, title }: ShipBrowserP
               </div>
               <p className="text-sm text-white/60">{selected.note}</p>
               <div className="flex flex-wrap gap-3 text-xs">
-                <a
-                  href={`https://www.nasa.gov/search/?q=${encodeURIComponent(selected.name)}`}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="text-star-500"
-                >
-                  NASA
-                </a>
-                <a
-                  href={`https://www.esa.int/Search?q=${encodeURIComponent(selected.name)}`}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="text-star-500"
-                >
-                  ESA
-                </a>
-                <a
-                  href={`https://www.spacex.com/?search=${encodeURIComponent(selected.name)}`}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="text-star-500"
-                >
-                  SpaceX
-                </a>
+                {selected.sources?.map((source) => (
+                  <a
+                    key={source.url}
+                    href={source.url}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-star-500"
+                  >
+                    {source.label}
+                  </a>
+                ))}
               </div>
             </div>
           ) : (

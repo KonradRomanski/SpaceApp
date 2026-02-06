@@ -1,50 +1,100 @@
 [
   {
-    "id": "falcon-9-second-stage",
-    "name": "Falcon 9 (2nd stage, dry)",
-    "massKg": 4000,
-    "maxAccelG": 3.5,
-    "image": "/ships/rocket.svg",
-    "note": "Approximate dry mass."
+    "id": "voyager-1",
+    "name": "Voyager 1",
+    "massKg": 721.9,
+    "maxAccelG": 0.00003,
+    "image": "/ships/probe.svg",
+    "note": "Launch mass. Assumed max acceleration.",
+    "sources": [
+      {
+        "label": "NASA Voyager Fact Sheet",
+        "url": "https://science.nasa.gov/mission/voyager/facts/"
+      }
+    ]
   },
   {
-    "id": "crew-dragon",
-    "name": "Crew Dragon (dry)",
-    "massKg": 12000,
-    "maxAccelG": 2.5,
-    "image": "/ships/capsule.svg",
-    "note": "Approximate dry mass."
+    "id": "new-horizons",
+    "name": "New Horizons",
+    "massKg": 478,
+    "maxAccelG": 0.00002,
+    "image": "/ships/probe.svg",
+    "note": "Launch mass. Assumed max acceleration.",
+    "sources": [
+      {
+        "label": "Wikipedia: New Horizons",
+        "url": "https://en.wikipedia.org/wiki/New_Horizons"
+      }
+    ]
   },
   {
-    "id": "orion",
-    "name": "Orion crew module (dry)",
-    "massKg": 10300,
-    "maxAccelG": 3,
-    "image": "/ships/capsule.svg",
-    "note": "Approximate dry mass."
+    "id": "parker-solar-probe",
+    "name": "Parker Solar Probe",
+    "massKg": 685,
+    "maxAccelG": 0.00004,
+    "image": "/ships/probe.svg",
+    "note": "Launch mass. Assumed max acceleration.",
+    "sources": [
+      {
+        "label": "NASA Parker Solar Probe Fact Sheet",
+        "url": "https://science.nasa.gov/mission/parker-solar-probe/facts/"
+      }
+    ]
   },
   {
-    "id": "starship-dry",
-    "name": "Starship (dry est.)",
-    "massKg": 120000,
-    "maxAccelG": 3,
-    "image": "/ships/rocket.svg",
-    "note": "Rough public estimate."
+    "id": "cassini",
+    "name": "Cassini (Huygens)",
+    "massKg": 5712,
+    "maxAccelG": 0.0002,
+    "image": "/ships/probe.svg",
+    "note": "Launch mass. Assumed max acceleration.",
+    "sources": [
+      {
+        "label": "NASA Cassini Mission Overview",
+        "url": "https://solarsystem.nasa.gov/missions/cassini/overview/"
+      }
+    ]
+  },
+  {
+    "id": "jwst",
+    "name": "James Webb Space Telescope",
+    "massKg": 6200,
+    "maxAccelG": 0.0001,
+    "image": "/ships/telescope.svg",
+    "note": "Launch mass. Assumed max acceleration.",
+    "sources": [
+      {
+        "label": "NASA Webb Overview",
+        "url": "https://science.nasa.gov/mission/webb/"
+      }
+    ]
+  },
+  {
+    "id": "hubble",
+    "name": "Hubble Space Telescope",
+    "massKg": 11110,
+    "maxAccelG": 0.0001,
+    "image": "/ships/telescope.svg",
+    "note": "Launch mass. Assumed max acceleration.",
+    "sources": [
+      {
+        "label": "ESA Hubble Factsheet",
+        "url": "https://www.esa.int/Science_Exploration/Space_Science/Hubble_overview/Facts_and_figures"
+      }
+    ]
   },
   {
     "id": "iss",
     "name": "International Space Station",
     "massKg": 420000,
-    "maxAccelG": 0.05,
+    "maxAccelG": 0.00001,
     "image": "/ships/station.svg",
-    "note": "Total mass in orbit."
-  },
-  {
-    "id": "voyager-1",
-    "name": "Voyager 1",
-    "massKg": 722,
-    "maxAccelG": 0.01,
-    "image": "/ships/probe.svg",
-    "note": "Launch mass."
+    "note": "Total mass in orbit. Assumed max acceleration.",
+    "sources": [
+      {
+        "label": "NASA ISS Facts and Figures",
+        "url": "https://www.nasa.gov/international-space-station/space-station-facts-and-figures/"
+      }
+    ]
   }
 ]

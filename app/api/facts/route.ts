@@ -2,71 +2,58 @@ import { NextResponse } from "next/server";
 
 export const revalidate = 21600;
 
-const TOPICS = [
-  "Voyager 1",
-  "Voyager 2",
-  "Hubble Space Telescope",
-  "James Webb Space Telescope",
-  "Apollo 11",
-  "Mars",
-  "Jupiter",
-  "Saturn",
-  "Europa (moon)",
-  "Titan (moon)",
-  "Proxima Centauri",
-  "Andromeda Galaxy",
-  "Milky Way",
-  "Black hole",
-  "Exoplanet",
-  "International Space Station",
-  "SpaceX",
-  "Asteroid belt",
-  "Kuiper belt",
-  "Oort cloud"
-];
+const APOD_ENDPOINT = "https://api.nasa.gov/planetary/apod";
+const FALLBACK_KEY = "DEMO_KEY";
 
-function slugify(title: string) {
-  return title
-    .toLowerCase()
-    .replace(/[()]/g, "")
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/(^-|-$)/g, "");
+function isoDate(date: Date) {
+  return date.toISOString().slice(0, 10);
 }
 
-async function fetchSummary(title: string) {
-  const url = `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(title)}`;
-  const response = await fetch(url, { next: { revalidate: 21600 } });
-  if (!response.ok) return null;
-  const json = await response.json();
-  return {
-    title: json.title ?? title,
-    description: json.extract ?? "",
-    image: json.thumbnail?.source ?? null,
-    wikiUrl: json.content_urls?.desktop?.page ?? null
-  };
+function shiftDate(date: Date, days: number) {
+  const next = new Date(date);
+  next.setUTCDate(next.getUTCDate() - days);
+  return next;
 }
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
-  const limit = Number(searchParams.get("limit") ?? "8");
-  const offset = Number(searchParams.get("offset") ?? "0");
-  const slice = TOPICS.slice(offset, offset + limit);
+  const mode = searchParams.get("mode") ?? "range";
+  const count = Number(searchParams.get("count") ?? "8");
+  const page = Number(searchParams.get("page") ?? "0");
+  const pageSize = Number(searchParams.get("pageSize") ?? "12");
+  const apiKey = process.env.NASA_API_KEY ?? FALLBACK_KEY;
 
-  const results = await Promise.all(
-    slice.map(async (title) => {
-      const summary = await fetchSummary(title);
-      return {
-        slug: slugify(title),
-        title,
-        description: summary?.description ?? "",
-        image: summary?.image ?? null,
-        wikiUrl: summary?.wikiUrl ?? null
-      };
-    })
-  );
+  let url = "";
+  if (mode === "random") {
+    const safeCount = Math.min(12, Math.max(4, count));
+    url = `${APOD_ENDPOINT}?api_key=${apiKey}&count=${safeCount}&thumbs=true`;
+  } else {
+    const now = new Date();
+    const end = shiftDate(now, page * pageSize);
+    const start = shiftDate(end, pageSize - 1);
+    url = `${APOD_ENDPOINT}?api_key=${apiKey}&start_date=${isoDate(start)}&end_date=${isoDate(end)}&thumbs=true`;
+  }
 
-  return NextResponse.json({
-    items: results,
-    total: TOPICS.length
-  });
+  try {
+    const response = await fetch(url, { next: { revalidate: 21600 } });
+    if (!response.ok) {
+      return NextResponse.json({ items: [] });
+    }
+    const json = await response.json();
+    const items = (Array.isArray(json) ? json : [json])
+      .filter((item) => item)
+      .map((item) => ({
+        date: item.date,
+        title: item.title,
+        description: item.explanation,
+        mediaType: item.media_type,
+        image:
+          item.media_type === "image"
+            ? item.url
+            : item.thumbnail_url ?? null
+      }));
+    return NextResponse.json({ items });
+  } catch {
+    return NextResponse.json({ items: [] });
+  }
 }

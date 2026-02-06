@@ -9,6 +9,7 @@ export type Body = {
   distanceLy?: number;
   distanceAuFromEarthAvg?: number;
   semiMajorAxisAu?: number;
+  jplCommand?: string;
   description: string;
   atmosphere?: string;
   temperatureK?: number;

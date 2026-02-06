@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { ExpandableText } from "./ExpandableText";
 
 type DiscoverItem = {
   id: string;
@@ -13,20 +14,34 @@ type DiscoverPanelProps = {
   onAdd: (items: DiscoverItem[], type: string) => void;
 };
 
-const types = ["planet", "moon", "star", "galaxy", "black-hole"] as const;
+const types = ["planet", "moon", "star", "galaxy", "black-hole", "asteroid", "dwarf-planet"] as const;
 
 export function DiscoverPanel({ onAdd }: DiscoverPanelProps) {
   const [type, setType] = useState<(typeof types)[number]>("planet");
   const [items, setItems] = useState<DiscoverItem[]>([]);
   const [loading, setLoading] = useState(false);
+  const [view, setView] = useState<"grid" | "list">("grid");
+  const [selected, setSelected] = useState<DiscoverItem | null>(null);
+  const controllerRef = useRef<AbortController | null>(null);
+
+  useEffect(() => {
+    setItems([]);
+    setSelected(null);
+    setLoading(false);
+    controllerRef.current?.abort();
+  }, [type]);
 
   function fetchItems() {
+    controllerRef.current?.abort();
+    const controller = new AbortController();
+    controllerRef.current = controller;
     setLoading(true);
-    fetch(`/api/discover?type=${type}&limit=20`)
+    fetch(`/api/discover?type=${type}&limit=20`, { signal: controller.signal })
       .then((res) => (res.ok ? res.json() : null))
       .then((data) => {
         if (!data?.items) return;
         setItems(data.items);
+        setSelected(data.items[0] ?? null);
       })
       .finally(() => setLoading(false));
   }
@@ -43,6 +58,24 @@ export function DiscoverPanel({ onAdd }: DiscoverPanelProps) {
               </option>
             ))}
           </select>
+          <div className="flex rounded-full border border-white/15">
+            <button
+              className={`px-3 py-1 text-xs uppercase tracking-widest ${
+                view === "grid" ? "text-star-500" : "text-white/60"
+              }`}
+              onClick={() => setView("grid")}
+            >
+              Grid
+            </button>
+            <button
+              className={`px-3 py-1 text-xs uppercase tracking-widest ${
+                view === "list" ? "text-star-500" : "text-white/60"
+              }`}
+              onClick={() => setView("list")}
+            >
+              List
+            </button>
+          </div>
           <button
             onClick={fetchItems}
             className="rounded-full border border-white/20 px-3 py-1 text-xs"
@@ -52,22 +85,98 @@ export function DiscoverPanel({ onAdd }: DiscoverPanelProps) {
         </div>
       </div>
       {items.length ? (
-        <div className="mt-4 grid gap-3 md:grid-cols-2">
-          {items.map((item) => (
-            <div key={item.id} className="rounded-2xl border border-white/10 p-3">
-              <div className="flex items-center gap-3">
-                {item.image ? (
-                  <img src={item.image} alt={item.name} className="h-10 w-10 rounded-lg object-cover" />
+        <div className="mt-4 grid gap-4 lg:grid-cols-[1fr_1.1fr]">
+          <div className="space-y-3">
+            {view === "grid" ? (
+              <div className="grid gap-3 md:grid-cols-2">
+                {items.map((item) => (
+                  <button
+                    key={item.id}
+                    onClick={() => setSelected(item)}
+                    className={`rounded-2xl border p-3 text-left ${
+                      selected?.id === item.id
+                        ? "border-star-500 bg-star-500/10"
+                        : "border-white/10 hover:border-white/30"
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      {item.image ? (
+                        <img src={item.image} alt={item.name} className="h-10 w-10 rounded-lg object-cover" />
+                      ) : (
+                        <div className="h-10 w-10 rounded-lg bg-space-800" />
+                      )}
+                      <div>
+                        <p className="text-sm font-semibold text-white">{item.name}</p>
+                        <p className="text-xs text-white/60">{item.description ?? ""}</p>
+                      </div>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            ) : (
+              <div className="glass card overflow-x-auto">
+                <table className="w-full text-left text-sm text-white/70">
+                  <thead className="text-xs uppercase text-white/50">
+                    <tr>
+                      <th className="p-3">Name</th>
+                      <th className="p-3">Description</th>
+                      <th className="p-3">Add</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {items.map((item) => (
+                      <tr key={item.id} className="border-t border-white/10">
+                        <td className="p-3">
+                          <button
+                            className="text-star-500"
+                            onClick={() => setSelected(item)}
+                          >
+                            {item.name}
+                          </button>
+                        </td>
+                        <td className="p-3 text-xs text-white/60">
+                          {item.description ?? ""}
+                        </td>
+                        <td className="p-3">
+                          <button
+                            className="text-xs text-star-500"
+                            onClick={() => onAdd([item], type)}
+                          >
+                            Add
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+          <div className="rounded-2xl border border-white/10 p-4">
+            {selected ? (
+              <div className="space-y-3">
+                {selected.image ? (
+                  <img src={selected.image} alt={selected.name} className="h-40 w-full rounded-xl object-cover" />
                 ) : (
-                  <div className="h-10 w-10 rounded-lg bg-space-800" />
+                  <div className="h-40 rounded-xl bg-space-800" />
                 )}
                 <div>
-                  <p className="text-sm font-semibold text-white">{item.name}</p>
-                  <p className="text-xs text-white/60">{item.description ?? ""}</p>
+                  <p className="text-lg font-display text-white">{selected.name}</p>
+                  <ExpandableText text={selected.description ?? ""} collapsedLines={4} />
+                </div>
+                <div className="flex gap-3 text-xs">
+                  <button
+                    className="text-star-500"
+                    onClick={() => onAdd([selected], type)}
+                  >
+                    Add to explorer
+                  </button>
                 </div>
               </div>
-            </div>
-          ))}
+            ) : (
+              <p className="text-sm text-white/60">Select an item to preview details.</p>
+            )}
+          </div>
         </div>
       ) : (
         <p className="mt-4 text-sm text-white/60">Fetch items to discover new bodies.</p>
@@ -77,7 +186,7 @@ export function DiscoverPanel({ onAdd }: DiscoverPanelProps) {
           onClick={() => onAdd(items, type)}
           className="mt-4 rounded-full border border-star-500 px-4 py-2 text-xs uppercase tracking-widest text-star-500"
         >
-          Add to explorer
+          Add all to explorer
         </button>
       ) : null}
     </section>

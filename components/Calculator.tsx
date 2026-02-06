@@ -86,6 +86,15 @@ export function Calculator() {
 
   const [distanceValue, setDistanceValue] = useState(4.25);
   const [distanceUnit, setDistanceUnit] = useState("ly");
+  const [ephemerisDate, setEphemerisDate] = useState(
+    new Date().toISOString().slice(0, 10)
+  );
+  const [ephemerisDistance, setEphemerisDistance] = useState<number | null>(null);
+  const [ephemerisLoading, setEphemerisLoading] = useState(false);
+  const [ephemerisError, setEphemerisError] = useState<string | null>(null);
+  const [windowDays, setWindowDays] = useState(120);
+  const [windowStepDays, setWindowStepDays] = useState(5);
+  const [windowResult, setWindowResult] = useState<{ date: string; distanceAu: number } | null>(null);
   const [accelerationValue, setAccelerationValue] = useState(1);
   const [accelerationUnit, setAccelerationUnit] = useState("g");
   const [shipMassValue, setShipMassValue] = useState(1000);
@@ -105,6 +114,9 @@ export function Calculator() {
   const [loading, setLoading] = useState(false);
   const [libraryTab, setLibraryTab] = useState<"ships" | "scenarios">("ships");
   const [distanceWarning, setDistanceWarning] = useState<string | null>(null);
+  const [assistEnabled, setAssistEnabled] = useState(false);
+  const [assistBody, setAssistBody] = useState("jupiter");
+  const [assistAngle, setAssistAngle] = useState(60);
 
   const allBodies = useMemo(() => bodies as Body[], []);
 
@@ -114,8 +126,28 @@ export function Calculator() {
 
   const selectedShipData = ships.find((ship) => ship.id === selectedShip) ?? null;
 
+  const assistBodies = [
+    { id: "mercury", name: "Mercury", speedKms: 47.36 },
+    { id: "venus", name: "Venus", speedKms: 35.02 },
+    { id: "earth", name: "Earth", speedKms: 29.78 },
+    { id: "mars", name: "Mars", speedKms: 24.07 },
+    { id: "jupiter", name: "Jupiter", speedKms: 13.07 },
+    { id: "saturn", name: "Saturn", speedKms: 9.69 },
+    { id: "uranus", name: "Uranus", speedKms: 6.81 },
+    { id: "neptune", name: "Neptune", speedKms: 5.43 }
+  ];
+
+  const assistPlanet = assistBodies.find((body) => body.id === assistBody) ?? assistBodies[4];
+  const assistBoostKms = assistEnabled
+    ? 2 * assistPlanet.speedKms * Math.sin((assistAngle * Math.PI) / 360)
+    : 0;
+
   useEffect(() => {
     if (!selectedBody) return;
+    if (distanceMode === "ephemeris") {
+      setDistanceWarning(t.distanceModeEphemerisWarning);
+      return;
+    }
     const selection = deriveDistance(selectedBody, distanceMode, t);
     setDistanceWarning(selection.warning);
     if (selection.value !== null) {
@@ -123,6 +155,74 @@ export function Calculator() {
       setDistanceUnit(selection.unit);
     }
   }, [selectedBody, distanceMode, t]);
+
+  useEffect(() => {
+    if (distanceMode !== "ephemeris") return;
+    if (ephemerisDistance === null) return;
+    setDistanceValue(ephemerisDistance);
+    setDistanceUnit("au");
+  }, [distanceMode, ephemerisDistance]);
+
+  async function fetchEphemeris() {
+    if (!selectedBody?.jplCommand) {
+      setEphemerisError("No ephemeris available for this body.");
+      return;
+    }
+    setEphemerisLoading(true);
+    setEphemerisError(null);
+    try {
+      const response = await fetch(
+        `/api/ephemeris?target=${encodeURIComponent(selectedBody.jplCommand)}&date=${encodeURIComponent(ephemerisDate)}`
+      );
+      if (!response.ok) {
+        throw new Error("Ephemeris lookup failed");
+      }
+      const data = await response.json();
+      if (typeof data.distanceAu === "number") {
+        setEphemerisDistance(data.distanceAu);
+      } else {
+        setEphemerisError("No distance returned.");
+      }
+    } catch (error) {
+      setEphemerisError("Ephemeris lookup failed.");
+    } finally {
+      setEphemerisLoading(false);
+    }
+  }
+
+  function addDays(base: string, days: number) {
+    const date = new Date(base);
+    date.setUTCDate(date.getUTCDate() + days);
+    return date.toISOString().slice(0, 10);
+  }
+
+  async function fetchWindow() {
+    if (!selectedBody?.jplCommand) {
+      setEphemerisError("No ephemeris available for this body.");
+      return;
+    }
+    setEphemerisLoading(true);
+    setEphemerisError(null);
+    setWindowResult(null);
+    const start = ephemerisDate;
+    const end = addDays(ephemerisDate, windowDays);
+    try {
+      const response = await fetch(
+        `/api/ephemeris?target=${encodeURIComponent(selectedBody.jplCommand)}&start=${encodeURIComponent(start)}&end=${encodeURIComponent(end)}&step=${encodeURIComponent(`${windowStepDays} d`)}`
+      );
+      if (!response.ok) throw new Error("Window lookup failed");
+      const data = await response.json();
+      if (typeof data.bestDistanceAu === "number") {
+        setWindowResult({ date: data.bestDate, distanceAu: data.bestDistanceAu });
+      } else {
+        setEphemerisError("No window data returned.");
+      }
+    } catch {
+      setEphemerisError("Window lookup failed.");
+    } finally {
+      setEphemerisLoading(false);
+    }
+  }
 
   function handleShipChange(value: string) {
     setSelectedShip(value);
@@ -184,6 +284,92 @@ export function Calculator() {
         setFxRates(data.rates);
       });
   }, []);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const params = new URLSearchParams(window.location.search);
+    const distance = parseNumber(params.get("distance"));
+    const accel = parseNumber(params.get("accel"));
+    const mass = parseNumber(params.get("mass"));
+    const distanceUnitParam = params.get("distanceUnit");
+    const accelUnitParam = params.get("accelUnit");
+    const massUnitParam = params.get("massUnit");
+    const shipParam = params.get("ship");
+    const bodyParam = params.get("body");
+    const modeParam = params.get("mode");
+    const dateParam = params.get("date");
+    const assistParam = params.get("assist");
+    const assistBodyParam = params.get("assistBody");
+    const assistAngleParam = parseNumber(params.get("assistAngle"));
+    if (distance !== null) setDistanceValue(distance);
+    if (accel !== null) setAccelerationValue(accel);
+    if (mass !== null) setShipMassValue(mass);
+    if (distanceUnitParam) setDistanceUnit(distanceUnitParam);
+    if (accelUnitParam) setAccelerationUnit(accelUnitParam);
+    if (massUnitParam) setShipMassUnit(massUnitParam);
+    if (shipParam) handleShipChange(shipParam);
+    if (bodyParam) setSelectedBodyId(bodyParam || null);
+    if (modeParam) setDistanceMode(modeParam);
+    if (dateParam) setEphemerisDate(dateParam);
+    if (assistParam === "1") setAssistEnabled(true);
+    if (assistBodyParam) setAssistBody(assistBodyParam);
+    if (assistAngleParam !== null) setAssistAngle(assistAngleParam);
+  }, []);
+
+  function downloadFile(filename: string, content: string, mime: string) {
+    const blob = new Blob([content], { type: mime });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(url);
+  }
+
+  function exportCSV() {
+    if (!result) return;
+    const rows = [
+      ["distance", `${distanceValue}`, distanceUnit],
+      ["acceleration", `${accelerationValue}`, accelerationUnit],
+      ["ship_mass", `${shipMassValue}`, shipMassUnit],
+      ["ship_time", result.results.properTimeHuman],
+      ["earth_time", result.results.earthTimeHuman],
+      ["vmax", result.results.vmaxFractionC ?? ""],
+      ["energy_j", result.results.energyJ],
+      ["fuel_mass", result.results.fuelMassKg ?? ""],
+      ["assist_boost_kms", assistEnabled ? assistBoostKms.toFixed(2) : ""]
+    ];
+    const csv = rows.map((row) => row.join(",")).join("\n");
+    downloadFile("cosmic-journey.csv", csv, "text/csv");
+  }
+
+  function exportPDF() {
+    if (typeof window === "undefined") return;
+    window.print();
+  }
+
+  function copyShareLink() {
+    if (typeof window === "undefined") return;
+    const params = new URLSearchParams({
+      distance: String(distanceValue),
+      distanceUnit,
+      accel: String(accelerationValue),
+      accelUnit: accelerationUnit,
+      mass: String(shipMassValue),
+      massUnit: shipMassUnit,
+      ship: selectedShip,
+      body: selectedBodyId ?? "",
+      mode: distanceMode,
+      date: ephemerisDate,
+      assist: assistEnabled ? "1" : "0",
+      assistBody,
+      assistAngle: String(assistAngle)
+    });
+    const url = `${window.location.origin}/calculator?${params.toString()}`;
+    navigator.clipboard.writeText(url);
+  }
 
   const accelWarning =
     selectedShipData && accelerationUnit === "g"
@@ -263,6 +449,69 @@ export function Calculator() {
               </select>
               {distanceWarning ? (
                 <p className="text-xs text-star-400">{distanceWarning}</p>
+              ) : null}
+              {distanceMode === "ephemeris" ? (
+                <div className="grid gap-3 rounded-2xl border border-white/10 p-3 text-xs text-white/70 md:grid-cols-[1fr_auto]">
+                  <div className="flex flex-col gap-2">
+                    <label>Start date (UTC)</label>
+                    <input
+                      type="date"
+                      value={ephemerisDate}
+                      onChange={(event) => setEphemerisDate(event.target.value)}
+                    />
+                    <div className="grid gap-2 md:grid-cols-2">
+                      <div className="flex flex-col gap-2">
+                        <label>Window days</label>
+                        <input
+                          type="number"
+                          min="10"
+                          step="10"
+                          value={windowDays}
+                          onChange={(event) => setWindowDays(Number(event.target.value))}
+                        />
+                      </div>
+                      <div className="flex flex-col gap-2">
+                        <label>Step (days)</label>
+                        <input
+                          type="number"
+                          min="1"
+                          step="1"
+                          value={windowStepDays}
+                          onChange={(event) => setWindowStepDays(Number(event.target.value))}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex flex-col justify-end gap-2">
+                    <button
+                      type="button"
+                      onClick={fetchEphemeris}
+                      className="rounded-full border border-star-500 px-3 py-2 text-xs uppercase tracking-widest text-star-500"
+                    >
+                      {ephemerisLoading ? "Fetching..." : "Fetch ephemeris"}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={fetchWindow}
+                      className="rounded-full border border-white/20 px-3 py-2 text-xs uppercase tracking-widest text-white/70"
+                    >
+                      Find window
+                    </button>
+                    {ephemerisDistance !== null ? (
+                      <p className="text-xs text-white/60">
+                        Distance: {ephemerisDistance.toFixed(3)} AU
+                      </p>
+                    ) : null}
+                    {windowResult ? (
+                      <p className="text-xs text-white/60">
+                        Best window: {windowResult.date} · {windowResult.distanceAu.toFixed(3)} AU
+                      </p>
+                    ) : null}
+                    {ephemerisError ? (
+                      <p className="text-xs text-star-400">{ephemerisError}</p>
+                    ) : null}
+                  </div>
+                </div>
               ) : null}
             </div>
 
@@ -433,6 +682,55 @@ export function Calculator() {
               </select>
             </div>
 
+            <div className="rounded-2xl border border-white/10 p-4 text-xs text-white/70">
+              <div className="flex items-center justify-between">
+                <p className="text-xs uppercase tracking-widest text-white/60">Gravity assist</p>
+                <button
+                  type="button"
+                  onClick={() => setAssistEnabled((prev) => !prev)}
+                  className={`rounded-full border px-3 py-1 text-xs uppercase tracking-widest ${
+                    assistEnabled ? "border-star-500 text-star-500" : "border-white/20 text-white/60"
+                  }`}
+                >
+                  {assistEnabled ? "On" : "Off"}
+                </button>
+              </div>
+              <div className="mt-3 grid gap-3 md:grid-cols-2">
+                <div className="flex flex-col gap-2">
+                  <label>Assist planet</label>
+                  <select
+                    value={assistBody}
+                    onChange={(event) => setAssistBody(event.target.value)}
+                    disabled={!assistEnabled}
+                  >
+                    {assistBodies.map((body) => (
+                      <option key={body.id} value={body.id}>
+                        {body.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div className="flex flex-col gap-2">
+                  <label>Turn angle (deg)</label>
+                  <input
+                    type="range"
+                    min="10"
+                    max="170"
+                    step="5"
+                    value={assistAngle}
+                    onChange={(event) => setAssistAngle(Number(event.target.value))}
+                    disabled={!assistEnabled}
+                  />
+                  <span>{assistAngle}°</span>
+                </div>
+              </div>
+              {assistEnabled ? (
+                <p className="mt-2 text-xs text-white/60">
+                  Estimated boost: {assistBoostKms.toFixed(2)} km/s (simplified model)
+                </p>
+              ) : null}
+            </div>
+
             <button
               type="submit"
               className="rounded-2xl bg-star-500 px-6 py-3 font-semibold text-space-900 shadow-star transition hover:-translate-y-0.5"
@@ -593,6 +891,29 @@ export function Calculator() {
                   <p className="text-sm text-white/60">
                     Mass-equivalent fuel: {result.results.massEquivalentKg ?? "n/a"} kg
                   </p>
+                  <div className="flex flex-wrap gap-3 text-xs">
+                    <button
+                      type="button"
+                      onClick={exportCSV}
+                      className="rounded-full border border-white/20 px-3 py-1 text-xs uppercase tracking-widest text-white/70"
+                    >
+                      Export CSV
+                    </button>
+                    <button
+                      type="button"
+                      onClick={exportPDF}
+                      className="rounded-full border border-white/20 px-3 py-1 text-xs uppercase tracking-widest text-white/70"
+                    >
+                      Export PDF
+                    </button>
+                    <button
+                      type="button"
+                      onClick={copyShareLink}
+                      className="rounded-full border border-white/20 px-3 py-1 text-xs uppercase tracking-widest text-white/70"
+                    >
+                      Copy share link
+                    </button>
+                  </div>
                 </div>
               ) : (
                 <p className="mt-4 text-white/60">Energy stats will appear here.</p>

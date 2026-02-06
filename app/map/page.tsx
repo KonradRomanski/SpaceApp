@@ -309,7 +309,7 @@ export default function MapPage() {
           </button>
         </div>
 
-        <div className="grid gap-6 lg:grid-cols-[2.2fr_1fr]">
+        <div className={`grid gap-6 ${fullscreen ? "" : "lg:grid-cols-[2.2fr_1fr]"}`}>
           <div
             ref={mapRef}
             className={
@@ -387,6 +387,7 @@ export default function MapPage() {
               </button>
             </div>
           </div>
+          {!fullscreen ? (
           <div className="glass card h-[70vh] min-h-[520px] overflow-y-auto">
             <div className="flex items-center gap-3">
               <button
@@ -579,6 +580,7 @@ export default function MapPage() {
               <p className="mt-4 text-sm text-white/60">Select a body to see details.</p>
             )}
           </div>
+          ) : null}
         </div>
       </div>
     </div>
