@@ -709,25 +709,27 @@ export function Calculator() {
                   </option>
                 ))}
               </select>
-              <div className="grid gap-3 md:grid-cols-2">
-                {ships.map((ship) => (
-                  <button
-                    key={ship.id}
-                    type="button"
-                    onClick={() => handleShipChange(ship.id)}
-                    className={`flex items-center gap-3 rounded-2xl border px-3 py-3 text-left transition ${
-                      selectedShip === ship.id
-                        ? "border-star-500 bg-star-500/10"
-                        : "border-white/10 hover:border-white/30"
-                    }`}
-                  >
-                    <img src={ship.image ?? "/ships/rocket.svg"} alt="ship" className="h-8 w-8" />
-                    <div>
-                      <p className="text-xs font-semibold text-white">{ship.name}</p>
-                      <p className="text-[11px] text-white/60">{ship.maxAccelG} g</p>
-                    </div>
-                  </button>
-                ))}
+              <div className="max-h-[220px] overflow-y-auto pr-1">
+                <div className="grid gap-3 md:grid-cols-2">
+                  {ships.map((ship) => (
+                    <button
+                      key={ship.id}
+                      type="button"
+                      onClick={() => handleShipChange(ship.id)}
+                      className={`flex items-center gap-3 rounded-2xl border px-3 py-3 text-left transition ${
+                        selectedShip === ship.id
+                          ? "border-star-500 bg-star-500/10"
+                          : "border-white/10 hover:border-white/30"
+                      }`}
+                    >
+                      <img src={ship.image ?? "/ships/rocket.svg"} alt="ship" className="h-8 w-8" />
+                      <div>
+                        <p className="text-xs font-semibold text-white">{ship.name}</p>
+                        <p className="text-[11px] text-white/60">{ship.maxAccelG} g</p>
+                      </div>
+                    </button>
+                  ))}
+                </div>
               </div>
             </div>
 

@@ -94,7 +94,7 @@ export function BodyBrowser({
         <h3 className="text-lg font-display text-star-500">{title}</h3>
         {loading ? <span className="text-xs text-white/60">Loading...</span> : null}
       </div>
-      <div className="mt-4 grid gap-4 lg:grid-cols-[1fr_1.1fr]">
+      <div className="mt-4 grid gap-4">
         <div className="space-y-3">
           <input
             type="text"
@@ -102,46 +102,44 @@ export function BodyBrowser({
             value={query}
             onChange={(event) => setQuery(event.target.value)}
           />
-          <div className="flex items-center justify-between">
-            <div className="flex flex-wrap gap-2">
-              {typeFilters.map((type) => (
-                <button
-                  key={type}
-                  type="button"
-                  className={`rounded-full border px-3 py-1 text-xs uppercase tracking-widest transition ${
-                    filter === type
-                      ? "border-star-500 text-star-500"
-                      : "border-white/15 text-white/60"
-                  }`}
-                  onClick={() => setFilter(type)}
-                >
-                  {type}
-                </button>
-              ))}
-            </div>
-            <div className="flex rounded-full border border-white/15">
+          <div className="flex flex-wrap gap-2">
+            {typeFilters.map((type) => (
               <button
+                key={type}
                 type="button"
-                className={`px-3 py-1 text-[10px] uppercase tracking-widest ${
-                  view === "cards" ? "text-star-500" : "text-white/60"
+                className={`rounded-full border px-3 py-1 text-xs uppercase tracking-widest transition ${
+                  filter === type
+                    ? "border-star-500 text-star-500"
+                    : "border-white/15 text-white/60"
                 }`}
-                onClick={() => setView("cards")}
+                onClick={() => setFilter(type)}
               >
-                Cards
+                {type}
               </button>
-              <button
-                type="button"
-                className={`px-3 py-1 text-[10px] uppercase tracking-widest ${
-                  view === "table" ? "text-star-500" : "text-white/60"
-                }`}
-                onClick={() => setView("table")}
-              >
-                Table
-              </button>
-            </div>
+            ))}
+          </div>
+          <div className="flex rounded-full border border-white/15 w-fit">
+            <button
+              type="button"
+              className={`px-3 py-1 text-[10px] uppercase tracking-widest ${
+                view === "cards" ? "text-star-500" : "text-white/60"
+              }`}
+              onClick={() => setView("cards")}
+            >
+              Cards
+            </button>
+            <button
+              type="button"
+              className={`px-3 py-1 text-[10px] uppercase tracking-widest ${
+                view === "table" ? "text-star-500" : "text-white/60"
+              }`}
+              onClick={() => setView("table")}
+            >
+              Table
+            </button>
           </div>
           {view === "cards" ? (
-            <div className="max-h-[210px] space-y-3 overflow-y-auto pr-2">
+            <div className="max-h-[300px] space-y-3 overflow-y-auto pr-2">
               {filteredBodies.map((body) => (
                 <button
                   key={body.id}
@@ -162,7 +160,7 @@ export function BodyBrowser({
               ))}
             </div>
           ) : (
-            <div className="glass card max-h-[210px] overflow-y-auto p-0">
+            <div className="glass card max-h-[300px] overflow-y-auto p-0">
               <table className="w-full text-left text-xs text-white/70">
                 <thead className="sticky top-0 bg-space-900/80 text-[10px] uppercase text-white/50">
                   <tr>

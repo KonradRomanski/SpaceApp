@@ -75,7 +75,7 @@ export function Map2D({
       const baseX = parent?.x ?? 260;
       const baseY = parent?.y ?? 260;
       const angle = (hashString(moon.id) % 360) * (Math.PI / 180);
-      const orbit = 10 + (hashString(moon.name) % 6) * 3;
+      const orbit = 18 + (hashString(moon.name) % 6) * 5;
       return {
         ...moon,
         x: baseX + Math.cos(angle) * orbit,

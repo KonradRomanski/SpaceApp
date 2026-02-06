@@ -55,6 +55,8 @@ export default function MapPage() {
   const mapRef = useRef<HTMLDivElement | null>(null);
   const [panelTab, setPanelTab] = useState<"info" | "list" | "discoveries">("info");
   const [query, setQuery] = useState("");
+  const [listSort, setListSort] = useState<"name" | "type" | "distance">("name");
+  const [listDir, setListDir] = useState<"asc" | "desc">("asc");
   const [view, setView] = useState<(typeof views)[number]["id"]>("all");
   const [focusTick, setFocusTick] = useState(0);
   const [focusPathActive, setFocusPathActive] = useState(false);
@@ -183,6 +185,25 @@ export default function MapPage() {
       return aDist - bDist;
     });
   }, [viewFiltered]);
+
+  const listItems = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    const filteredList = viewFiltered.filter((body) =>
+      body.name.toLowerCase().includes(q)
+    );
+    const sorted = [...filteredList].sort((a, b) => {
+      let compare = 0;
+      if (listSort === "name") compare = a.name.localeCompare(b.name);
+      if (listSort === "type") compare = a.type.localeCompare(b.type);
+      if (listSort === "distance") {
+        const aDist = a.distanceLy ?? a.distanceAuFromEarthAvg ?? 999999;
+        const bDist = b.distanceLy ?? b.distanceAuFromEarthAvg ?? 999999;
+        compare = aDist - bDist;
+      }
+      return listDir === "asc" ? compare : -compare;
+    });
+    return sorted;
+  }, [viewFiltered, query, listSort, listDir]);
 
   useEffect(() => {
     if (!focusPathActive || focusList.length === 0) return;
@@ -451,24 +472,76 @@ export default function MapPage() {
                   value={query}
                   onChange={(event) => setQuery(event.target.value)}
                 />
-                <div className="space-y-2">
-                  {viewFiltered
-                    .filter((body) =>
-                      body.name.toLowerCase().includes(query.trim().toLowerCase())
-                    )
-                    .map((body) => (
-                      <button
-                        key={body.id}
-                        onClick={() => setSelectedId(body.id)}
-                        className={`w-full rounded-2xl border px-3 py-2 text-left text-sm ${
-                          selectedId === body.id
-                            ? "border-star-500 bg-star-500/10"
-                            : "border-white/10 hover:border-white/30"
-                        }`}
-                      >
-                        {body.name}
-                      </button>
-                    ))}
+                <div className="flex flex-wrap items-center gap-2 text-xs text-white/60">
+                  <span>Sort:</span>
+                  <button
+                    className={`rounded-full border px-2 py-1 ${
+                      listSort === "name" ? "border-star-500 text-star-500" : "border-white/15"
+                    }`}
+                    onClick={() => setListSort("name")}
+                  >
+                    Name
+                  </button>
+                  <button
+                    className={`rounded-full border px-2 py-1 ${
+                      listSort === "type" ? "border-star-500 text-star-500" : "border-white/15"
+                    }`}
+                    onClick={() => setListSort("type")}
+                  >
+                    Type
+                  </button>
+                  <button
+                    className={`rounded-full border px-2 py-1 ${
+                      listSort === "distance" ? "border-star-500 text-star-500" : "border-white/15"
+                    }`}
+                    onClick={() => setListSort("distance")}
+                  >
+                    Distance
+                  </button>
+                  <button
+                    className="rounded-full border border-white/20 px-2 py-1"
+                    onClick={() => setListDir((prev) => (prev === "asc" ? "desc" : "asc"))}
+                  >
+                    {listDir === "asc" ? "Asc" : "Desc"}
+                  </button>
+                </div>
+                <div className="glass card overflow-x-auto p-0">
+                  <table className="w-full text-left text-xs text-white/70">
+                    <thead className="text-[10px] uppercase text-white/50">
+                      <tr>
+                        <th className="p-3">Name</th>
+                        <th className="p-3">Type</th>
+                        <th className="p-3">Distance</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {listItems.map((body) => (
+                        <tr
+                          key={body.id}
+                          className={`border-t border-white/10 ${
+                            selectedId === body.id ? "bg-star-500/10" : ""
+                          }`}
+                        >
+                          <td className="p-3">
+                            <button
+                              className="text-star-500"
+                              onClick={() => setSelectedId(body.id)}
+                            >
+                              {body.name}
+                            </button>
+                          </td>
+                          <td className="p-3">{body.type}</td>
+                          <td className="p-3">
+                            {body.distanceLy !== undefined
+                              ? `${body.distanceLy} ly`
+                              : body.distanceAuFromEarthAvg !== undefined
+                              ? `${body.distanceAuFromEarthAvg} AU`
+                              : "n/a"}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
                 </div>
               </div>
             ) : panelTab === "discoveries" ? (

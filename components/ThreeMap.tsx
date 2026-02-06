@@ -70,26 +70,26 @@ export function ThreeMap({ bodies, selectedId, onSelect, className, focusTargetI
       };
     });
 
-    const moonPoints = moons.map((moon) => {
-      const parent =
-        solarPoints.find((planet) => Math.abs((planet.semiMajorAxisAu ?? 0) - (moon.semiMajorAxisAu ?? 0)) < 0.1) ??
-        solarPoints.find((planet) => Math.abs((planet.distanceAuFromEarthAvg ?? 0) - (moon.distanceAuFromEarthAvg ?? 0)) < 0.2) ??
-        solarPoints[0];
-      const base = parent?.position ?? new THREE.Vector3(0, 0, 0);
-      const angle = (hashString(moon.id) % 360) * (Math.PI / 180);
-      const orbit = 0.6 + (hashString(moon.name) % 5) * 0.08;
-      return {
-        ...moon,
-        position: new THREE.Vector3(
-          base.x + Math.cos(angle) * orbit,
-          base.y + Math.sin(angle) * orbit,
-          base.z + Math.sin(angle * 0.6) * 0.2
-        ),
-        parentId: parent?.id,
-        orbitRadius: orbit,
-        group: "moon"
-      };
-    });
+      const moonPoints = moons.map((moon) => {
+        const parent =
+          solarPoints.find((planet) => Math.abs((planet.semiMajorAxisAu ?? 0) - (moon.semiMajorAxisAu ?? 0)) < 0.1) ??
+          solarPoints.find((planet) => Math.abs((planet.distanceAuFromEarthAvg ?? 0) - (moon.distanceAuFromEarthAvg ?? 0)) < 0.2) ??
+          solarPoints[0];
+        const base = parent?.position ?? new THREE.Vector3(0, 0, 0);
+        const angle = (hashString(moon.id) % 360) * (Math.PI / 180);
+        const orbit = 1.6 + (hashString(moon.name) % 6) * 0.25;
+        return {
+          ...moon,
+          position: new THREE.Vector3(
+            base.x + Math.cos(angle) * orbit,
+            base.y + Math.sin(angle) * orbit,
+            base.z + Math.sin(angle * 0.6) * 0.2
+          ),
+          parentId: parent?.id,
+          orbitRadius: orbit,
+          group: "moon"
+        };
+      });
 
     return {
       solar: solarPoints,
@@ -172,8 +172,8 @@ export function ThreeMap({ bodies, selectedId, onSelect, className, focusTargetI
           enablePan
           enableDamping
           dampingFactor={0.08}
-          maxDistance={500}
-          minDistance={10}
+          maxDistance={700}
+          minDistance={4}
         />
 
         {points.sun ? (
@@ -222,7 +222,7 @@ export function ThreeMap({ bodies, selectedId, onSelect, className, focusTargetI
             body={body}
             isSelected={body.id === selectedId}
             onSelect={onSelect}
-            size={0.45}
+            size={0.65}
           />
         ))}
 

@@ -391,7 +391,7 @@ export default function BodiesPage() {
               </tbody>
             </table>
           </div>
-        )}
+        ) : null}
       </div>
     </div>
   );
