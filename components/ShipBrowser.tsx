@@ -1,12 +1,13 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 
 type Ship = {
   id: string;
   name: string;
   massKg: number;
   maxAccelG: number;
+  org?: string;
   image?: string;
   note: string;
   sources?: { label: string; url: string }[];
@@ -19,7 +20,25 @@ type ShipBrowserProps = {
   title: string;
 };
 
+const orgTabs = ["All", "SpaceX", "NASA", "ESA", "Other"] as const;
+
 export function ShipBrowser({ ships, selectedId, onSelect, title }: ShipBrowserProps) {
+  const [orgFilter, setOrgFilter] = useState<(typeof orgTabs)[number]>("All");
+
+  const filtered = useMemo(() => {
+    if (orgFilter === "All") return ships;
+    if (orgFilter === "Other") {
+      return ships.filter(
+        (ship) =>
+          !ship.org ||
+          (!ship.org.includes("NASA") &&
+            !ship.org.includes("ESA") &&
+            !ship.org.includes("SpaceX"))
+      );
+    }
+    return ships.filter((ship) => ship.org?.includes(orgFilter));
+  }, [ships, orgFilter]);
+
   const selected = useMemo(
     () => ships.find((ship) => ship.id === selectedId) ?? null,
     [ships, selectedId]
@@ -29,13 +48,24 @@ export function ShipBrowser({ ships, selectedId, onSelect, title }: ShipBrowserP
     <section className="glass card">
       <div className="flex items-center justify-between">
         <h3 className="text-lg font-display text-star-500">{title}</h3>
-        {selected ? (
-          <span className="text-xs text-white/60">{selected.note}</span>
-        ) : null}
+        {selected ? <span className="text-xs text-white/60">{selected.note}</span> : null}
+      </div>
+      <div className="mt-3 flex flex-wrap gap-2">
+        {orgTabs.map((tab) => (
+          <button
+            key={tab}
+            onClick={() => setOrgFilter(tab)}
+            className={`rounded-full border px-3 py-1 text-xs uppercase tracking-widest ${
+              orgFilter === tab ? "border-star-500 text-star-500" : "border-white/15 text-white/60"
+            }`}
+          >
+            {tab}
+          </button>
+        ))}
       </div>
       <div className="mt-4 grid gap-4 lg:grid-cols-[1fr_1.2fr]">
         <div className="max-h-[260px] space-y-3 overflow-y-auto pr-2">
-          {ships.map((ship) => (
+          {filtered.map((ship) => (
             <button
               key={ship.id}
               type="button"
@@ -49,7 +79,9 @@ export function ShipBrowser({ ships, selectedId, onSelect, title }: ShipBrowserP
               <img src={ship.image ?? "/ships/rocket.svg"} alt="ship" className="h-8 w-8" />
               <div>
                 <p className="text-sm font-semibold text-white">{ship.name}</p>
-                <p className="text-xs text-white/60">Max accel: {ship.maxAccelG} g</p>
+                <p className="text-xs text-white/60">
+                  {ship.org ?? "Other"} · Max accel {ship.maxAccelG} g
+                </p>
               </div>
             </button>
           ))}
@@ -64,7 +96,9 @@ export function ShipBrowser({ ships, selectedId, onSelect, title }: ShipBrowserP
               />
               <div>
                 <p className="text-sm text-white/60">Mass</p>
-                <p className="text-lg font-semibold text-white">{selected.massKg.toLocaleString("en-US")} kg</p>
+                <p className="text-lg font-semibold text-white">
+                  {selected.massKg.toLocaleString("en-US")} kg
+                </p>
               </div>
               <div>
                 <p className="text-sm text-white/60">Max acceleration</p>

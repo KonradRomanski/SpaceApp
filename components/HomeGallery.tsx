@@ -65,7 +65,7 @@ export function HomeGallery() {
         </div>
       </div>
       <div className="mt-4 grid gap-4 md:grid-cols-3">
-        {items.slice(0, 9).map((item, idx) => (
+        {items.map((item, idx) => (
           <a
             key={`${item.title}-${idx}`}
             href={`/gallery/${item.nasaId}`}

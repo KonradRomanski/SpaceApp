@@ -48,7 +48,7 @@ export default function MapPage() {
   const { verified } = useVerified();
   const baseBodies = useMemo(() => bodies as Body[], []);
   const [extraBodies, setExtraBodies] = useState<Body[]>([]);
-  const [selectedId, setSelectedId] = useState<string | null>("earth");
+  const [selectedId, setSelectedId] = useState<string | null>("sun");
   const [mode, setMode] = useState<"3d" | "2d">("3d");
   const [zoom2d, setZoom2d] = useState(1);
   const [fullscreen, setFullscreen] = useState(false);
@@ -155,8 +155,8 @@ export default function MapPage() {
       return;
     }
     if (selectedId && viewFiltered.some((body) => body.id === selectedId)) return;
-    const nextId = viewFiltered[0]?.id ?? "sun";
-    setSelectedId(nextId);
+    const nextBody = viewFiltered.find((body) => body.id === "sun") ?? viewFiltered[0];
+    setSelectedId(nextBody?.id ?? null);
     setFocusTick((prev) => prev + 1);
   }, [viewFiltered, selectedId]);
 
@@ -333,11 +333,12 @@ export default function MapPage() {
             className={
               fullscreen
                 ? "fixed inset-0 z-50 h-screen w-screen bg-space-900 p-6"
-                : "h-[70vh] min-h-[520px]"
+                : "h-[75vh] min-h-[600px]"
             }
           >
             {mode === "3d" ? (
               <ThreeMap
+                key={`three-${fullscreen}`}
                 bodies={viewFiltered}
                 selectedId={selectedId}
                 onSelect={(body) => setSelectedId(body.id)}
@@ -347,12 +348,15 @@ export default function MapPage() {
               />
             ) : (
               <Map2D
+                key={`map2d-${fullscreen}`}
                 bodies={viewFiltered}
                 selectedId={selectedId}
                 onSelect={(body) => setSelectedId(body.id)}
                 className="glass card h-full overflow-hidden"
                 zoom={zoom2d}
                 onZoomChange={setZoom2d}
+                focusTargetId={selectedId}
+                focusTick={focusTick}
               />
             )}
             {mode === "2d" ? (
@@ -406,7 +410,7 @@ export default function MapPage() {
             </div>
           </div>
           {!fullscreen ? (
-          <div className="glass card h-[70vh] min-h-[520px] overflow-y-auto">
+          <div className="glass card h-[75vh] min-h-[600px] overflow-y-auto">
             <div className="flex items-center gap-3">
               <button
                 className={`rounded-full border px-3 py-1 text-xs uppercase tracking-widest ${

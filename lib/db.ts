@@ -22,6 +22,17 @@ async function init() {
       semi_major_au DOUBLE PRECISION,
       created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
     );
+    CREATE TABLE IF NOT EXISTS extra_ships (
+      id TEXT PRIMARY KEY,
+      name TEXT NOT NULL,
+      org TEXT,
+      mass_kg DOUBLE PRECISION,
+      max_accel_g DOUBLE PRECISION,
+      image TEXT,
+      note TEXT,
+      source_url TEXT,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    );
   `);
   initialized = true;
 }
@@ -82,4 +93,54 @@ export async function addExtraBodies(items: any[]) {
 export async function removeExtraBody(id: string) {
   await init();
   await pool.query("DELETE FROM extra_bodies WHERE id = $1", [id]);
+}
+
+export async function listExtraShips() {
+  await init();
+  const { rows } = await pool.query(
+    "SELECT * FROM extra_ships ORDER BY created_at DESC"
+  );
+  return rows;
+}
+
+export async function addExtraShips(items: any[]) {
+  await init();
+  const now = new Date().toISOString();
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
+    for (const row of items) {
+      if (!row?.id || !row?.name) continue;
+      await client.query(
+        `
+        INSERT INTO extra_ships
+        (id, name, org, mass_kg, max_accel_g, image, note, source_url, created_at)
+        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)
+        ON CONFLICT (id) DO NOTHING
+      `,
+        [
+          row.id,
+          row.name,
+          row.org ?? null,
+          row.massKg ?? null,
+          row.maxAccelG ?? null,
+          row.image ?? null,
+          row.note ?? null,
+          row.sourceUrl ?? null,
+          row.createdAt ?? now
+        ]
+      );
+    }
+    await client.query("COMMIT");
+  } catch (error) {
+    await client.query("ROLLBACK");
+    throw error;
+  } finally {
+    client.release();
+  }
+}
+
+export async function removeExtraShip(id: string) {
+  await init();
+  await pool.query("DELETE FROM extra_ships WHERE id = $1", [id]);
 }

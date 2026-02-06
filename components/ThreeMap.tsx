@@ -145,7 +145,7 @@ export function ThreeMap({ bodies, selectedId, onSelect, className, focusTargetI
   }, [bodies]);
 
   useEffect(() => {
-    if (!controlsRef.current || !focusTargetId) return;
+    if (!controlsRef.current || !focusTargetId || !focusTick) return;
     const target =
       points.solar.find((b) => b.id === focusTargetId)?.position ||
       points.stars.find((b) => b.id === focusTargetId)?.position ||

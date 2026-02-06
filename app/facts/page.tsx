@@ -26,7 +26,7 @@ export default function FactsPage() {
 
   useEffect(() => {
     setLoading(true);
-    fetch("/api/facts?mode=range&page=0&pageSize=12")
+    fetch("/api/facts?mode=range&page=0&pageSize=12", { cache: "no-store" })
       .then((res) => (res.ok ? res.json() : null))
       .then((data) => {
         if (!data?.items) return;
@@ -38,7 +38,7 @@ export default function FactsPage() {
 
   useEffect(() => {
     if (tab !== "categories") return;
-    fetch(`/api/facts/categories?type=${category}&limit=24`)
+    fetch(`/api/facts/categories?type=${category}&limit=24`, { cache: "no-store" })
       .then((res) => (res.ok ? res.json() : null))
       .then((data) => {
         if (!data?.items) return;
@@ -49,7 +49,7 @@ export default function FactsPage() {
   function loadMore() {
     const next = page + 1;
     setLoading(true);
-    fetch(`/api/facts?mode=range&page=${next}&pageSize=12`)
+    fetch(`/api/facts?mode=range&page=${next}&pageSize=12`, { cache: "no-store" })
       .then((res) => (res.ok ? res.json() : null))
       .then((data) => {
         if (!data?.items) return;
@@ -61,7 +61,7 @@ export default function FactsPage() {
 
   function refresh() {
     setLoading(true);
-    fetch("/api/facts?mode=random&count=12")
+    fetch(`/api/facts?mode=random&count=12&t=${Date.now()}`, { cache: "no-store" })
       .then((res) => (res.ok ? res.json() : null))
       .then((data) => {
         if (!data?.items) return;

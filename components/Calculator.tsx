@@ -493,19 +493,19 @@ export function Calculator() {
           <p className="max-w-2xl text-lg text-white/70">{t.description}</p>
         </header>
 
-        <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)]">
+        <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)]">
+          <BodyBrowser
+            bodies={allBodies}
+            selectedId={selectedBodyId}
+            onSelect={(body) => setSelectedBodyId(body.id)}
+            title={t.bodyBrowserTitle}
+            detailsLabel={t.details}
+            searchPlaceholder={t.searchBody}
+          />
           <form
             onSubmit={handleSubmit}
             className="glass card flex flex-col gap-6 bg-cosmic-radial"
           >
-            <BodyBrowser
-              bodies={allBodies}
-              selectedId={selectedBodyId}
-              onSelect={(body) => setSelectedBodyId(body.id)}
-              title={t.bodyBrowserTitle}
-              detailsLabel={t.details}
-              searchPlaceholder={t.searchBody}
-            />
 
             <div className="flex flex-col gap-2">
               <InfoTooltip label={t.distanceMode} description={t.distanceModeDesc} />
@@ -907,186 +907,186 @@ export function Calculator() {
             </button>
             {error ? <p className="text-sm text-star-400">{error}</p> : null}
           </form>
+        </div>
 
-          <div id="export-area" className="flex flex-col gap-6">
-            <section className="glass card bg-nebula">
-              <h2 className="text-xl font-display text-star-500">
-                {t.timeSpeedSummary}
-              </h2>
-              {result ? (
-                <div className="mt-4 grid gap-4 md:grid-cols-2">
-                  <div>
-                    <InfoTooltip label={t.shipTime} description={t.shipTimeDesc} />
-                    <p className="text-2xl font-semibold">
-                      {result.results.properTimeHuman}
-                    </p>
-                    <p className="text-xs text-white/50">
-                      {result.results.properTimeSeconds} s
-                    </p>
-                  </div>
-                  <div>
-                    <InfoTooltip label={t.earthTime} description={t.earthTimeDesc} />
-                    <p className="text-2xl font-semibold">
-                      {result.results.earthTimeHuman}
-                    </p>
-                    <p className="text-xs text-white/50">
-                      {result.results.earthTimeSeconds} s
-                    </p>
-                  </div>
-                  <div>
-                    <InfoTooltip label={t.peakVelocity} description={t.peakVelocityDesc} />
-                    <p className="text-2xl font-semibold">
-                      {result.results.vmaxFractionC ?? "n/a"} c
-                    </p>
-                    <p className="text-xs text-white/50">
-                      {result.results.vmaxMs} m/s
-                    </p>
-                  </div>
-                  <div>
-                    <InfoTooltip label={t.rapidity} description={t.rapidityDesc} />
-                    <p className="text-2xl font-semibold">
-                      {result.results.rapidity}
-                    </p>
-                  </div>
-                </div>
-              ) : (
-                <p className="mt-4 text-white/60">Run a simulation to see the results.</p>
-              )}
-              {result?.rangeResults ? (
-                <div className="mt-4 rounded-2xl border border-white/10 p-3 text-xs text-white/60">
-                  <p>Min distance: {result.rangeResults.minDistanceMeters} m</p>
-                  <p>Max distance: {result.rangeResults.maxDistanceMeters} m</p>
-                  <p>Earth time: {result.rangeResults.earthTimeMin} - {result.rangeResults.earthTimeMax}</p>
-                  <p>Ship time: {result.rangeResults.shipTimeMin} - {result.rangeResults.shipTimeMax}</p>
-                </div>
-              ) : null}
-            </section>
-
-            <section className="glass card">
-              <h2 className="text-xl font-display text-star-500">{t.energyDemand}</h2>
-              {result ? (
-                <div className="mt-4 grid gap-4">
-                  <div>
-                    <InfoTooltip label={t.totalEnergy} description={t.totalEnergyDesc} />
-                    <p className="text-2xl font-semibold">
-                      {result.results.energyJ} J
-                    </p>
-                    <p className="text-xs text-white/50">
-                      {result.results.energyKwh ?? "n/a"} kWh
-                    </p>
-                  </div>
-                  <div className="grid gap-3 md:grid-cols-3">
-                    <div className="rounded-2xl border border-white/10 p-4">
-                      <p className="text-xs text-white/60">Tsar Bomba</p>
-                      <p className="text-lg font-semibold">
-                        {result.comparisons.tsarBomba ?? "n/a"}x
-                      </p>
-                    </div>
-                    <div className="rounded-2xl border border-white/10 p-4">
-                      <p className="text-xs text-white/60">Global year</p>
-                      <p className="text-lg font-semibold">
-                        {result.comparisons.globalYear ?? "n/a"}x
-                      </p>
-                    </div>
-                    <div className="rounded-2xl border border-white/10 p-4">
-                      <p className="text-xs text-white/60">Sun (1 sec)</p>
-                      <p className="text-lg font-semibold">
-                        {result.comparisons.sunPerSecond ?? "n/a"}x
-                      </p>
-                    </div>
-                  </div>
-                  <div className="grid gap-3 md:grid-cols-3">
-                    <div className="rounded-2xl border border-white/10 p-4">
-                      <p className="text-xs text-white/60">Ship cost (USD)</p>
-                      <p className="text-lg font-semibold">
-                        {shipCostDisplay.toLocaleString("en-US", {
-                          style: "currency",
-                          currency
-                        })}
-                      </p>
-                      {currency !== "USD" ? (
-                        <p className="text-xs text-white/50">
-                          ${shipCostUsd.toLocaleString("en-US", { maximumFractionDigits: 0 })}
-                        </p>
-                      ) : null}
-                    </div>
-                    <div className="rounded-2xl border border-white/10 p-4">
-                      <p className="text-xs text-white/60">Fuel cost ({currency})</p>
-                      <p className="text-lg font-semibold">
-                        {fuelCostDisplay
-                          ? fuelCostDisplay.toLocaleString("en-US", {
-                              style: "currency",
-                              currency
-                            })
-                          : "n/a"}
-                      </p>
-                      {currency !== "USD" && fuelCostUsd ? (
-                        <p className="text-xs text-white/50">
-                          ${fuelCostUsd.toLocaleString("en-US", { maximumFractionDigits: 0 })}
-                        </p>
-                      ) : null}
-                    </div>
-                    <div className="rounded-2xl border border-white/10 p-4">
-                      <p className="text-xs text-white/60">Total cost ({currency})</p>
-                      <p className="text-lg font-semibold">
-                        {totalCostDisplay.toLocaleString("en-US", {
-                          style: "currency",
-                          currency
-                        })}
-                      </p>
-                      {currency !== "USD" ? (
-                        <p className="text-xs text-white/50">
-                          ${totalCostUsd.toLocaleString("en-US", { maximumFractionDigits: 0 })}
-                        </p>
-                      ) : null}
-                    </div>
-                  </div>
-                  <div className="grid gap-3 md:grid-cols-2">
-                    <div className="rounded-2xl border border-white/10 p-4">
-                      <InfoTooltip label={t.fuelMass} description={t.fuelMassDesc} />
-                      <p className="text-lg font-semibold">
-                        {result.results.fuelMassKg ?? "n/a"} kg
-                      </p>
-                    </div>
-                    <div className="rounded-2xl border border-white/10 p-4">
-                      <p className="text-xs text-white/60">{t.ratioShipFuel}</p>
-                      <p className="text-lg font-semibold">
-                        {result.results.fuelRatio ?? "n/a"}
-                      </p>
-                    </div>
-                  </div>
-                  <p className="text-sm text-white/60">
-                    Mass-equivalent fuel: {result.results.massEquivalentKg ?? "n/a"} kg
+        <div id="export-area" className="grid gap-6 lg:grid-cols-2">
+          <section className="glass card bg-nebula">
+            <h2 className="text-xl font-display text-star-500">
+              {t.timeSpeedSummary}
+            </h2>
+            {result ? (
+              <div className="mt-4 grid gap-4 md:grid-cols-2">
+                <div>
+                  <InfoTooltip label={t.shipTime} description={t.shipTimeDesc} />
+                  <p className="text-2xl font-semibold">
+                    {result.results.properTimeHuman}
                   </p>
-                  <div className="flex flex-wrap gap-3 text-xs">
-                    <button
-                      type="button"
-                      onClick={exportCSV}
-                      className="rounded-full border border-white/20 px-3 py-1 text-xs uppercase tracking-widest text-white/70"
-                    >
-                      Export CSV
-                    </button>
-                    <button
-                      type="button"
-                      onClick={exportPDF}
-                      className="rounded-full border border-white/20 px-3 py-1 text-xs uppercase tracking-widest text-white/70"
-                    >
-                      Export PDF
-                    </button>
-                    <button
-                      type="button"
-                      onClick={copyShareLink}
-                      className="rounded-full border border-white/20 px-3 py-1 text-xs uppercase tracking-widest text-white/70"
-                    >
-                      Copy share link
-                    </button>
+                  <p className="text-xs text-white/50">
+                    {result.results.properTimeSeconds} s
+                  </p>
+                </div>
+                <div>
+                  <InfoTooltip label={t.earthTime} description={t.earthTimeDesc} />
+                  <p className="text-2xl font-semibold">
+                    {result.results.earthTimeHuman}
+                  </p>
+                  <p className="text-xs text-white/50">
+                    {result.results.earthTimeSeconds} s
+                  </p>
+                </div>
+                <div>
+                  <InfoTooltip label={t.peakVelocity} description={t.peakVelocityDesc} />
+                  <p className="text-2xl font-semibold">
+                    {result.results.vmaxFractionC ?? "n/a"} c
+                  </p>
+                  <p className="text-xs text-white/50">
+                    {result.results.vmaxMs} m/s
+                  </p>
+                </div>
+                <div>
+                  <InfoTooltip label={t.rapidity} description={t.rapidityDesc} />
+                  <p className="text-2xl font-semibold">
+                    {result.results.rapidity}
+                  </p>
+                </div>
+              </div>
+            ) : (
+              <p className="mt-4 text-white/60">Run a simulation to see the results.</p>
+            )}
+            {result?.rangeResults ? (
+              <div className="mt-4 rounded-2xl border border-white/10 p-3 text-xs text-white/60">
+                <p>Min distance: {result.rangeResults.minDistanceMeters} m</p>
+                <p>Max distance: {result.rangeResults.maxDistanceMeters} m</p>
+                <p>Earth time: {result.rangeResults.earthTimeMin} - {result.rangeResults.earthTimeMax}</p>
+                <p>Ship time: {result.rangeResults.shipTimeMin} - {result.rangeResults.shipTimeMax}</p>
+              </div>
+            ) : null}
+          </section>
+
+          <section className="glass card">
+            <h2 className="text-xl font-display text-star-500">{t.energyDemand}</h2>
+            {result ? (
+              <div className="mt-4 grid gap-4">
+                <div>
+                  <InfoTooltip label={t.totalEnergy} description={t.totalEnergyDesc} />
+                  <p className="text-2xl font-semibold">
+                    {result.results.energyJ} J
+                  </p>
+                  <p className="text-xs text-white/50">
+                    {result.results.energyKwh ?? "n/a"} kWh
+                  </p>
+                </div>
+                <div className="grid gap-3 md:grid-cols-3">
+                  <div className="rounded-2xl border border-white/10 p-4">
+                    <p className="text-xs text-white/60">Tsar Bomba</p>
+                    <p className="text-lg font-semibold">
+                      {result.comparisons.tsarBomba ?? "n/a"}x
+                    </p>
+                  </div>
+                  <div className="rounded-2xl border border-white/10 p-4">
+                    <p className="text-xs text-white/60">Global year</p>
+                    <p className="text-lg font-semibold">
+                      {result.comparisons.globalYear ?? "n/a"}x
+                    </p>
+                  </div>
+                  <div className="rounded-2xl border border-white/10 p-4">
+                    <p className="text-xs text-white/60">Sun (1 sec)</p>
+                    <p className="text-lg font-semibold">
+                      {result.comparisons.sunPerSecond ?? "n/a"}x
+                    </p>
                   </div>
                 </div>
-              ) : (
-                <p className="mt-4 text-white/60">Energy stats will appear here.</p>
-              )}
-            </section>
-          </div>
+                <div className="grid gap-3 md:grid-cols-3">
+                  <div className="rounded-2xl border border-white/10 p-4">
+                    <p className="text-xs text-white/60">Ship cost (USD)</p>
+                    <p className="text-lg font-semibold">
+                      {shipCostDisplay.toLocaleString("en-US", {
+                        style: "currency",
+                        currency
+                      })}
+                    </p>
+                    {currency !== "USD" ? (
+                      <p className="text-xs text-white/50">
+                        ${shipCostUsd.toLocaleString("en-US", { maximumFractionDigits: 0 })}
+                      </p>
+                    ) : null}
+                  </div>
+                  <div className="rounded-2xl border border-white/10 p-4">
+                    <p className="text-xs text-white/60">Fuel cost ({currency})</p>
+                    <p className="text-lg font-semibold">
+                      {fuelCostDisplay
+                        ? fuelCostDisplay.toLocaleString("en-US", {
+                            style: "currency",
+                            currency
+                          })
+                        : "n/a"}
+                    </p>
+                    {currency !== "USD" && fuelCostUsd ? (
+                      <p className="text-xs text-white/50">
+                        ${fuelCostUsd.toLocaleString("en-US", { maximumFractionDigits: 0 })}
+                      </p>
+                    ) : null}
+                  </div>
+                  <div className="rounded-2xl border border-white/10 p-4">
+                    <p className="text-xs text-white/60">Total cost ({currency})</p>
+                    <p className="text-lg font-semibold">
+                      {totalCostDisplay.toLocaleString("en-US", {
+                        style: "currency",
+                        currency
+                      })}
+                    </p>
+                    {currency !== "USD" ? (
+                      <p className="text-xs text-white/50">
+                        ${totalCostUsd.toLocaleString("en-US", { maximumFractionDigits: 0 })}
+                      </p>
+                    ) : null}
+                  </div>
+                </div>
+                <div className="grid gap-3 md:grid-cols-2">
+                  <div className="rounded-2xl border border-white/10 p-4">
+                    <InfoTooltip label={t.fuelMass} description={t.fuelMassDesc} />
+                    <p className="text-lg font-semibold">
+                      {result.results.fuelMassKg ?? "n/a"} kg
+                    </p>
+                  </div>
+                  <div className="rounded-2xl border border-white/10 p-4">
+                    <p className="text-xs text-white/60">{t.ratioShipFuel}</p>
+                    <p className="text-lg font-semibold">
+                      {result.results.fuelRatio ?? "n/a"}
+                    </p>
+                  </div>
+                </div>
+                <p className="text-sm text-white/60">
+                  Mass-equivalent fuel: {result.results.massEquivalentKg ?? "n/a"} kg
+                </p>
+                <div className="flex flex-wrap gap-3 text-xs">
+                  <button
+                    type="button"
+                    onClick={exportCSV}
+                    className="rounded-full border border-white/20 px-3 py-1 text-xs uppercase tracking-widest text-white/70"
+                  >
+                    Export CSV
+                  </button>
+                  <button
+                    type="button"
+                    onClick={exportPDF}
+                    className="rounded-full border border-white/20 px-3 py-1 text-xs uppercase tracking-widest text-white/70"
+                  >
+                    Export PDF
+                  </button>
+                  <button
+                    type="button"
+                    onClick={copyShareLink}
+                    className="rounded-full border border-white/20 px-3 py-1 text-xs uppercase tracking-widest text-white/70"
+                  >
+                    Copy share link
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <p className="mt-4 text-white/60">Energy stats will appear here.</p>
+            )}
+          </section>
         </div>
 
         <section className="glass card">

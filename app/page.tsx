@@ -1,4 +1,5 @@
 import Link from "next/link";
+import React from "react";
 import { HomeFacts } from "../components/HomeFacts";
 import { HomeGallery } from "../components/HomeGallery";
 
@@ -31,6 +32,18 @@ const modules = [
 ];
 
 export default function HomePage() {
+  const [showGuide, setShowGuide] = React.useState(false);
+
+  React.useEffect(() => {
+    const raw = localStorage.getItem("cj-guide-dismissed");
+    setShowGuide(raw !== "true");
+  }, []);
+
+  function dismissGuide() {
+    localStorage.setItem("cj-guide-dismissed", "true");
+    setShowGuide(false);
+  }
+
   return (
     <div className="min-h-screen px-6 pb-16 md:px-16">
       <div className="mx-auto flex max-w-6xl flex-col gap-10">
@@ -79,8 +92,17 @@ export default function HomePage() {
           ))}
         </section>
 
+        {showGuide ? (
         <section className="glass card">
-          <h2 className="text-xl font-display text-star-500">Getting started</h2>
+          <div className="flex items-center justify-between">
+            <h2 className="text-xl font-display text-star-500">Getting started</h2>
+            <button
+              onClick={dismissGuide}
+              className="rounded-full border border-white/20 px-3 py-1 text-xs text-white/70"
+            >
+              Dismiss
+            </button>
+          </div>
           <div className="mt-4 grid gap-4 md:grid-cols-3">
             <Link href="/calculator" className="rounded-2xl border border-white/10 p-4">
               <p className="text-xs uppercase tracking-widest text-white/50">Step 1</p>
@@ -96,6 +118,7 @@ export default function HomePage() {
             </Link>
           </div>
         </section>
+        ) : null}
 
         <HomeFacts />
         <HomeGallery />

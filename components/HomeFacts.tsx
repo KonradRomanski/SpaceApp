@@ -19,11 +19,14 @@ export function HomeFacts() {
   const [refreshTick, setRefreshTick] = useState(0);
 
   useEffect(() => {
-    fetch(`/api/facts?mode=random&count=8&t=${refreshTick}`)
+    fetch(`/api/facts?mode=range&page=0&pageSize=8&t=${refreshTick}`, {
+      cache: "no-store"
+    })
       .then((res) => (res.ok ? res.json() : null))
       .then((data: FactsResponse | null) => {
         if (!data?.items) return;
-        setFacts(data.items);
+        const sorted = [...data.items].sort((a, b) => b.date.localeCompare(a.date));
+        setFacts(sorted);
       });
   }, [refreshTick]);
 

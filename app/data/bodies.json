@@ -70,7 +70,7 @@
     "type": "moon",
     "jplCommand": "301",
     "distanceAuFromEarthAvg": 0.00257,
-    "semiMajorAxisAu": 1,
+    "semiMajorAxisAu": 0.00257,
     "description": "Earth's natural satellite, stabilizing our axial tilt.",
     "radiusKm": 1737.4,
     "massKg": 7.342e+22,

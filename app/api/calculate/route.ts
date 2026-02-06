@@ -42,7 +42,7 @@ function formatFriendly(value: unknown) {
   const num = toNumberSafe(value);
   if (num === null) return formatSci(value);
   const abs = Math.abs(num);
-  if (abs >= 1e6 || (abs > 0 && abs < 1e-3)) {
+  if (abs >= 1e9 || (abs > 0 && abs < 1e-3)) {
     return num.toExponential(3);
   }
   return num.toLocaleString("en-US", { maximumFractionDigits: 4 });

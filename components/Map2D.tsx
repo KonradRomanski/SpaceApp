@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { Body } from "./TargetMap";
 import { getBodyIcon } from "../lib/icons";
 
@@ -29,9 +29,21 @@ type Map2DProps = {
   className?: string;
   zoom: number;
   onZoomChange: (value: number) => void;
+  focusTargetId?: string | null;
+  focusTick?: number;
 };
 
-export function Map2D({ bodies, selectedId, onSelect, className, zoom, onZoomChange }: Map2DProps) {
+export function Map2D({
+  bodies,
+  selectedId,
+  onSelect,
+  className,
+  zoom,
+  onZoomChange,
+  focusTargetId,
+  focusTick
+}: Map2DProps) {
+  const [focusId, setFocusId] = useState<string | null>(null);
   const points = useMemo(() => {
     const solar = bodies.filter(
       (b) => b.semiMajorAxisAu !== undefined && (b.type === "planet" || b.type === "dwarf-planet")
@@ -112,13 +124,18 @@ export function Map2D({ bodies, selectedId, onSelect, className, zoom, onZoomCha
     };
   }, [bodies]);
 
+  useEffect(() => {
+    if (!focusTargetId || !focusTick) return;
+    setFocusId(focusTargetId);
+  }, [focusTargetId, focusTick]);
+
   const focusPoint =
-    points.solar.find((b) => b.id === selectedId) ||
-    points.moons.find((b) => b.id === selectedId) ||
-    points.stars.find((b) => b.id === selectedId) ||
-    points.galaxies.find((b) => b.id === selectedId) ||
-    points.catalog.find((b) => b.id === selectedId) ||
-    (points.sun && points.sun.id === selectedId ? points.sun : null) ||
+    (focusId ? points.solar.find((b) => b.id === focusId) : null) ||
+    (focusId ? points.moons.find((b) => b.id === focusId) : null) ||
+    (focusId ? points.stars.find((b) => b.id === focusId) : null) ||
+    (focusId ? points.galaxies.find((b) => b.id === focusId) : null) ||
+    (focusId ? points.catalog.find((b) => b.id === focusId) : null) ||
+    (focusId && points.sun && points.sun.id === focusId ? points.sun : null) ||
     null;
   const baseSize = 840;
   const viewSize = baseSize / Math.max(0.6, Math.min(zoom, 3));

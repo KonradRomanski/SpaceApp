@@ -4,6 +4,7 @@
     "name": "Voyager 1",
     "massKg": 721.9,
     "maxAccelG": 0.00003,
+    "org": "NASA",
     "image": "/ships/probe.svg",
     "note": "Launch mass. Assumed max acceleration.",
     "sources": [
@@ -18,6 +19,7 @@
     "name": "New Horizons",
     "massKg": 478,
     "maxAccelG": 0.00002,
+    "org": "NASA",
     "image": "/ships/probe.svg",
     "note": "Launch mass. Assumed max acceleration.",
     "sources": [
@@ -32,6 +34,7 @@
     "name": "Parker Solar Probe",
     "massKg": 685,
     "maxAccelG": 0.00004,
+    "org": "NASA",
     "image": "/ships/probe.svg",
     "note": "Launch mass. Assumed max acceleration.",
     "sources": [
@@ -46,6 +49,7 @@
     "name": "Cassini (Huygens)",
     "massKg": 5712,
     "maxAccelG": 0.0002,
+    "org": "NASA/ESA",
     "image": "/ships/probe.svg",
     "note": "Launch mass. Assumed max acceleration.",
     "sources": [
@@ -60,6 +64,7 @@
     "name": "James Webb Space Telescope",
     "massKg": 6200,
     "maxAccelG": 0.0001,
+    "org": "NASA/ESA",
     "image": "/ships/telescope.svg",
     "note": "Launch mass. Assumed max acceleration.",
     "sources": [
@@ -74,6 +79,7 @@
     "name": "Hubble Space Telescope",
     "massKg": 11110,
     "maxAccelG": 0.0001,
+    "org": "NASA/ESA",
     "image": "/ships/telescope.svg",
     "note": "Launch mass. Assumed max acceleration.",
     "sources": [
@@ -88,12 +94,73 @@
     "name": "International Space Station",
     "massKg": 420000,
     "maxAccelG": 0.00001,
+    "org": "NASA/ESA",
     "image": "/ships/station.svg",
     "note": "Total mass in orbit. Assumed max acceleration.",
     "sources": [
       {
         "label": "NASA ISS Facts and Figures",
         "url": "https://www.nasa.gov/international-space-station/space-station-facts-and-figures/"
+      }
+    ]
+  },
+  {
+    "id": "crew-dragon",
+    "name": "Dragon 2 (Crew Dragon)",
+    "massKg": 7700,
+    "maxAccelG": 0.002,
+    "org": "SpaceX",
+    "image": "/ships/capsule.svg",
+    "note": "Dry mass. Assumed max acceleration.",
+    "sources": [
+      {
+        "label": "Wikipedia: Dragon 2",
+        "url": "https://en.wikipedia.org/wiki/SpaceX_Dragon_2"
+      }
+    ]
+  },
+  {
+    "id": "falcon-9-second-stage",
+    "name": "Falcon 9 (2nd stage dry)",
+    "massKg": 3900,
+    "maxAccelG": 0.5,
+    "org": "SpaceX",
+    "image": "/ships/rocket.svg",
+    "note": "Second-stage empty mass. Assumed max acceleration.",
+    "sources": [
+      {
+        "label": "Wikipedia: Falcon 9",
+        "url": "https://en.wikipedia.org/wiki/Falcon_9"
+      }
+    ]
+  },
+  {
+    "id": "falcon-heavy",
+    "name": "Falcon Heavy (launch mass)",
+    "massKg": 1420788,
+    "maxAccelG": 2.5,
+    "org": "SpaceX",
+    "image": "/ships/rocket.svg",
+    "note": "Launch mass. Assumed max acceleration.",
+    "sources": [
+      {
+        "label": "SpaceX: Falcon Heavy",
+        "url": "https://www.spacex.com/vehicles/falcon-heavy/"
+      }
+    ]
+  },
+  {
+    "id": "starship",
+    "name": "Starship (spacecraft, empty mass)",
+    "massKg": 100000,
+    "maxAccelG": 2,
+    "org": "SpaceX",
+    "image": "/ships/rocket.svg",
+    "note": "Empty mass estimate. Assumed max acceleration.",
+    "sources": [
+      {
+        "label": "Wikipedia: Starship (spacecraft)",
+        "url": "https://en.wikipedia.org/wiki/SpaceX_Starship_(spacecraft)"
       }
     ]
   }

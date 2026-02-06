@@ -128,11 +128,8 @@ async function fetchNasaImage(name: string) {
 }
 
 async function fetchWikipedia(name: string, type?: string, overrideTitle?: string) {
-  const candidates = [
-    overrideTitle,
-    name,
-    type && WIKI_SUFFIX[type] ? `${name}${WIKI_SUFFIX[type]}` : null
-  ].filter(Boolean) as string[];
+  const suffix = type && WIKI_SUFFIX[type] ? `${name}${WIKI_SUFFIX[type]}` : null;
+  const candidates = [overrideTitle, suffix, name].filter(Boolean) as string[];
 
   for (const title of candidates) {
     const url = `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(title)}`;
