@@ -477,15 +477,6 @@ export function Calculator() {
             <p className="text-sm uppercase tracking-[0.3em] text-white/60">
               {t.appTitle}
             </p>
-            <div className="flex items-center gap-3 text-xs text-white/60">
-              <span>{t.language}</span>
-              <button
-                onClick={() => setLocale(locale === "en" ? "pl" : "en")}
-                className="rounded-full border border-white/20 px-3 py-1"
-              >
-                {locale.toUpperCase()}
-              </button>
-            </div>
           </div>
           <h1 className="text-4xl font-display text-gradient md:text-6xl">
             {t.subtitle}

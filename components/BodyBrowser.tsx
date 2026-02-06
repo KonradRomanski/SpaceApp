@@ -44,6 +44,7 @@ export function BodyBrowser({
   const [loading, setLoading] = useState(false);
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState<(typeof typeFilters)[number]>("all");
+  const [view, setView] = useState<"cards" | "table">("cards");
 
   const selectedBody = useMemo(
     () => bodies.find((body) => body.id === selectedId) ?? null,
@@ -58,6 +59,12 @@ export function BodyBrowser({
       return body.name.toLowerCase().includes(q);
     });
   }, [bodies, query, filter]);
+
+  function distanceLabel(body: Body) {
+    if (body.distanceLy !== undefined) return `${body.distanceLy} ly`;
+    if (body.distanceAuFromEarthAvg !== undefined) return `${body.distanceAuFromEarthAvg} AU`;
+    return "n/a";
+  }
 
   useEffect(() => {
     if (!verified || !selectedBody || enriched[selectedBody.id]) return;
@@ -87,7 +94,7 @@ export function BodyBrowser({
         <h3 className="text-lg font-display text-star-500">{title}</h3>
         {loading ? <span className="text-xs text-white/60">Loading...</span> : null}
       </div>
-      <div className="mt-4 grid gap-4 lg:grid-cols-[1fr_1.2fr]">
+      <div className="mt-4 grid gap-4 lg:grid-cols-[1fr_1.1fr]">
         <div className="space-y-3">
           <input
             type="text"
@@ -95,42 +102,100 @@ export function BodyBrowser({
             value={query}
             onChange={(event) => setQuery(event.target.value)}
           />
-          <div className="flex flex-wrap gap-2">
-            {typeFilters.map((type) => (
+          <div className="flex items-center justify-between">
+            <div className="flex flex-wrap gap-2">
+              {typeFilters.map((type) => (
+                <button
+                  key={type}
+                  type="button"
+                  className={`rounded-full border px-3 py-1 text-xs uppercase tracking-widest transition ${
+                    filter === type
+                      ? "border-star-500 text-star-500"
+                      : "border-white/15 text-white/60"
+                  }`}
+                  onClick={() => setFilter(type)}
+                >
+                  {type}
+                </button>
+              ))}
+            </div>
+            <div className="flex rounded-full border border-white/15">
               <button
-                key={type}
                 type="button"
-                className={`rounded-full border px-3 py-1 text-xs uppercase tracking-widest transition ${
-                  filter === type
-                    ? "border-star-500 text-star-500"
-                    : "border-white/15 text-white/60"
+                className={`px-3 py-1 text-[10px] uppercase tracking-widest ${
+                  view === "cards" ? "text-star-500" : "text-white/60"
                 }`}
-                onClick={() => setFilter(type)}
+                onClick={() => setView("cards")}
               >
-                {type}
+                Cards
               </button>
-            ))}
-          </div>
-          <div className="max-h-[260px] space-y-3 overflow-y-auto pr-2">
-            {filteredBodies.map((body) => (
               <button
-                key={body.id}
                 type="button"
-                onClick={() => onSelect(body)}
-                className={`flex w-full items-center gap-3 rounded-2xl border px-3 py-3 text-left transition ${
-                  selectedId === body.id
-                    ? "border-star-500 bg-star-500/10"
-                    : "border-white/10 hover:border-white/30"
+                className={`px-3 py-1 text-[10px] uppercase tracking-widest ${
+                  view === "table" ? "text-star-500" : "text-white/60"
                 }`}
+                onClick={() => setView("table")}
               >
-                <img src={getBodyIcon(body)} alt="icon" className="h-8 w-8" />
-                <div>
-                  <p className="text-sm font-semibold text-white">{body.name}</p>
-                  <p className="text-xs text-white/60">{body.type}</p>
-                </div>
+                Table
               </button>
-            ))}
+            </div>
           </div>
+          {view === "cards" ? (
+            <div className="max-h-[210px] space-y-3 overflow-y-auto pr-2">
+              {filteredBodies.map((body) => (
+                <button
+                  key={body.id}
+                  type="button"
+                  onClick={() => onSelect(body)}
+                  className={`flex w-full items-center gap-3 rounded-2xl border px-3 py-3 text-left transition ${
+                    selectedId === body.id
+                      ? "border-star-500 bg-star-500/10"
+                      : "border-white/10 hover:border-white/30"
+                  }`}
+                >
+                  <img src={getBodyIcon(body)} alt="icon" className="h-8 w-8" />
+                  <div>
+                    <p className="text-sm font-semibold text-white">{body.name}</p>
+                    <p className="text-xs text-white/60">{body.type}</p>
+                  </div>
+                </button>
+              ))}
+            </div>
+          ) : (
+            <div className="glass card max-h-[210px] overflow-y-auto p-0">
+              <table className="w-full text-left text-xs text-white/70">
+                <thead className="sticky top-0 bg-space-900/80 text-[10px] uppercase text-white/50">
+                  <tr>
+                    <th className="p-3">Name</th>
+                    <th className="p-3">Type</th>
+                    <th className="p-3">Distance</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredBodies.map((body) => (
+                    <tr
+                      key={body.id}
+                      className={`border-t border-white/10 ${
+                        selectedId === body.id ? "bg-star-500/10" : ""
+                      }`}
+                    >
+                      <td className="p-3">
+                        <button
+                          type="button"
+                          className="text-star-500"
+                          onClick={() => onSelect(body)}
+                        >
+                          {body.name}
+                        </button>
+                      </td>
+                      <td className="p-3">{body.type}</td>
+                      <td className="p-3">{distanceLabel(body)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </div>
         <div className="rounded-2xl border border-white/10 p-4">
           {selectedBody ? (
@@ -145,7 +210,7 @@ export function BodyBrowser({
                 <img
                   src={active?.image ?? selectedBody.imageOverride ?? ""}
                   alt={selectedBody.name}
-                  className="h-36 w-full rounded-xl object-cover"
+                  className="h-28 w-full rounded-xl object-cover"
                 />
               ) : (
                 <div className="flex h-36 items-center justify-center rounded-xl bg-space-800 text-xs text-white/50">
