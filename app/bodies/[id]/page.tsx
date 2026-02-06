@@ -6,6 +6,7 @@ import bodies from "../../data/bodies.json";
 import type { Body } from "../../../components/TargetMap";
 import { getBodyIcon } from "../../../lib/icons";
 import { useVerified } from "../../../components/VerifiedProvider";
+import { ExpandableText } from "../../../components/ExpandableText";
 
 export default function BodyDetailPage({ params }: { params: { id: string } }) {
   const formatNumber = (value: number) =>
@@ -16,6 +17,12 @@ export default function BodyDetailPage({ params }: { params: { id: string } }) {
   const body = allBodies.find((item) => item.id === params.id);
   const [info, setInfo] = useState<{ image: string | null; description: string | null; wikiUrl: string | null; facts?: Record<string, string | null> } | null>(null);
   const { verified } = useVerified();
+
+  const isPresent = (value?: string | number | null) => {
+    if (value === null || value === undefined) return false;
+    if (typeof value === "string" && ["NA", "N/A", "na"].includes(value.trim())) return false;
+    return String(value).trim().length > 0;
+  };
 
   useEffect(() => {
     const raw = localStorage.getItem("cj-extra-bodies");
@@ -75,7 +82,7 @@ export default function BodyDetailPage({ params }: { params: { id: string } }) {
               <h1 className="text-4xl font-display text-gradient md:text-5xl">{body.name}</h1>
             </div>
           </div>
-          <p className="text-lg text-white/70">{info?.description ?? body.description}</p>
+          <ExpandableText text={info?.description ?? body.description} collapsedLines={5} />
         </header>
 
         {info?.image || body.imageOverride ? (
@@ -120,19 +127,19 @@ export default function BodyDetailPage({ params }: { params: { id: string } }) {
                 <p className="text-lg font-semibold">{formatNumber(body.gravityMs2)} m/s²</p>
               </div>
             ) : null}
-            {body.atmosphere ? (
+            {isPresent(body.atmosphere) ? (
               <div>
                 <p className="text-sm text-white/60">Atmosphere</p>
                 <p className="text-lg font-semibold">{body.atmosphere}</p>
               </div>
             ) : null}
-            {body.temperatureK ? (
+            {isPresent(body.temperatureK) ? (
               <div>
                 <p className="text-sm text-white/60">Avg temperature</p>
                 <p className="text-lg font-semibold">{body.temperatureK} K</p>
               </div>
             ) : null}
-            {body.composition ? (
+            {isPresent(body.composition) ? (
               <div>
                 <p className="text-sm text-white/60">Composition</p>
                 <p className="text-lg font-semibold">{body.composition}</p>
@@ -150,64 +157,64 @@ export default function BodyDetailPage({ params }: { params: { id: string } }) {
                 <p className="text-lg font-semibold">{body.moons}</p>
               </div>
             ) : null}
-            {info?.facts?.mass ? (
+            {isPresent(info?.facts?.mass) ? (
               <div>
                 <p className="text-sm text-white/60">Mass</p>
-                <p className="text-lg font-semibold">{info.facts.mass}</p>
+                <p className="text-lg font-semibold">{info?.facts?.mass}</p>
               </div>
             ) : null}
-            {info?.facts?.radius ? (
+            {isPresent(info?.facts?.radius) ? (
               <div>
                 <p className="text-sm text-white/60">Radius</p>
-                <p className="text-lg font-semibold">{info.facts.radius}</p>
+                <p className="text-lg font-semibold">{info?.facts?.radius}</p>
               </div>
             ) : null}
-            {info?.facts?.density ? (
+            {isPresent(info?.facts?.density) ? (
               <div>
                 <p className="text-sm text-white/60">Density</p>
-                <p className="text-lg font-semibold">{info.facts.density}</p>
+                <p className="text-lg font-semibold">{info?.facts?.density}</p>
               </div>
             ) : null}
-            {info?.facts?.surfaceGravity ? (
+            {isPresent(info?.facts?.surfaceGravity) ? (
               <div>
                 <p className="text-sm text-white/60">Surface gravity</p>
-                <p className="text-lg font-semibold">{info.facts.surfaceGravity}</p>
+                <p className="text-lg font-semibold">{info?.facts?.surfaceGravity}</p>
               </div>
             ) : null}
-            {info?.facts?.orbitalPeriod ? (
+            {isPresent(info?.facts?.orbitalPeriod) ? (
               <div>
                 <p className="text-sm text-white/60">Orbital period</p>
-                <p className="text-lg font-semibold">{info.facts.orbitalPeriod}</p>
+                <p className="text-lg font-semibold">{info?.facts?.orbitalPeriod}</p>
               </div>
             ) : null}
-            {info?.facts?.rotationPeriod ? (
+            {isPresent(info?.facts?.rotationPeriod) ? (
               <div>
                 <p className="text-sm text-white/60">Rotation period</p>
-                <p className="text-lg font-semibold">{info.facts.rotationPeriod}</p>
+                <p className="text-lg font-semibold">{info?.facts?.rotationPeriod}</p>
               </div>
             ) : null}
-            {info?.facts?.semiMajorAxis ? (
+            {isPresent(info?.facts?.semiMajorAxis) ? (
               <div>
                 <p className="text-sm text-white/60">Semi-major axis</p>
-                <p className="text-lg font-semibold">{info.facts.semiMajorAxis}</p>
+                <p className="text-lg font-semibold">{info?.facts?.semiMajorAxis}</p>
               </div>
             ) : null}
-            {info?.facts?.albedo ? (
+            {isPresent(info?.facts?.albedo) ? (
               <div>
                 <p className="text-sm text-white/60">Albedo</p>
-                <p className="text-lg font-semibold">{info.facts.albedo}</p>
+                <p className="text-lg font-semibold">{info?.facts?.albedo}</p>
               </div>
             ) : null}
-            {info?.facts?.eccentricity ? (
+            {isPresent(info?.facts?.eccentricity) ? (
               <div>
                 <p className="text-sm text-white/60">Orbital eccentricity</p>
-                <p className="text-lg font-semibold">{info.facts.eccentricity}</p>
+                <p className="text-lg font-semibold">{info?.facts?.eccentricity}</p>
               </div>
             ) : null}
-            {info?.facts?.periapsis ? (
+            {isPresent(info?.facts?.periapsis) ? (
               <div>
                 <p className="text-sm text-white/60">Periapsis</p>
-                <p className="text-lg font-semibold">{info.facts.periapsis}</p>
+                <p className="text-lg font-semibold">{info?.facts?.periapsis}</p>
               </div>
             ) : null}
           </div>

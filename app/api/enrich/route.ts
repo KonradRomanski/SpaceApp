@@ -9,16 +9,42 @@ const NASA_IMAGES = "https://images-api.nasa.gov/search";
 type Body = {
   id: string;
   name: string;
+  type?: string;
   imageOverride?: string;
   descriptionOverride?: string;
   wikiUrlOverride?: string;
+  wikiTitleOverride?: string;
 };
 
-const bodyIndex = new Map(
-  (bodies as Body[]).map((body) => [body.id, body])
-);
+const bodyIndex = new Map((bodies as Body[]).map((body) => [body.id, body]));
 
-function buildWikidataQuery(name: string) {
+const TYPE_QIDS: Record<string, string[]> = {
+  planet: ["Q634"],
+  moon: ["Q2537"],
+  star: ["Q523"],
+  galaxy: ["Q318"],
+  "black-hole": ["Q589"],
+  asteroid: ["Q3863"],
+  "dwarf-planet": ["Q15978631"]
+};
+
+const WIKI_SUFFIX: Record<string, string> = {
+  moon: " (moon)",
+  asteroid: " (asteroid)",
+  "dwarf-planet": " (dwarf planet)",
+  galaxy: " (galaxy)",
+  "black-hole": " (black hole)",
+  star: " (star)"
+};
+
+function buildWikidataQuery(name: string, type?: string) {
+  const safeName = name.replace(/"/g, '\\"');
+  const typeValues = type && TYPE_QIDS[type] ? TYPE_QIDS[type] : [];
+  const typeClause = typeValues.length
+    ? `?item wdt:P31/wdt:P279* ?type. VALUES ?type { ${typeValues
+        .map((qid) => `wd:${qid}`)
+        .join(" ")} }`
+    : "";
   return `SELECT ?item ?itemLabel ?image ?description
     ?mass ?massUnitLabel
     ?radius ?radiusUnitLabel
@@ -31,7 +57,8 @@ function buildWikidataQuery(name: string) {
     ?eccentricity
     ?periapsis ?periapsisUnitLabel
     WHERE {
-    ?item rdfs:label "${name}"@en.
+    ?item rdfs:label "${safeName}"@en.
+    ${typeClause}
     OPTIONAL { ?item wdt:P18 ?image. }
     OPTIONAL { ?item schema:description ?description FILTER (lang(?description) = "en") }
     OPTIONAL { ?item p:P2067/psv:P2067 ?massNode. ?massNode wikibase:quantityAmount ?mass. ?massNode wikibase:quantityUnit ?massUnit. }
@@ -48,8 +75,8 @@ function buildWikidataQuery(name: string) {
   } LIMIT 1`;
 }
 
-async function fetchWikidata(name: string) {
-  const query = buildWikidataQuery(name);
+async function fetchWikidata(name: string, type?: string) {
+  const query = buildWikidataQuery(name, type);
   const url = `${WIKIDATA_ENDPOINT}?query=${encodeURIComponent(query)}`;
   const response = await fetch(url, {
     headers: {
@@ -97,16 +124,25 @@ async function fetchNasaImage(name: string) {
   return link;
 }
 
-async function fetchWikipedia(name: string) {
-  const url = `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(name)}`;
-  const response = await fetch(url, { next: { revalidate: 86400 } });
-  if (!response.ok) return null;
-  const json = await response.json();
-  return {
-    description: json.extract ?? null,
-    image: json.thumbnail?.source ?? null,
-    wikiUrl: json.content_urls?.desktop?.page ?? null
-  };
+async function fetchWikipedia(name: string, type?: string, overrideTitle?: string) {
+  const candidates = [
+    overrideTitle,
+    name,
+    type && WIKI_SUFFIX[type] ? `${name}${WIKI_SUFFIX[type]}` : null
+  ].filter(Boolean) as string[];
+
+  for (const title of candidates) {
+    const url = `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(title)}`;
+    const response = await fetch(url, { next: { revalidate: 86400 } });
+    if (!response.ok) continue;
+    const json = await response.json();
+    return {
+      description: json.extract ?? null,
+      image: json.thumbnail?.source ?? null,
+      wikiUrl: json.content_urls?.desktop?.page ?? null
+    };
+  }
+  return null;
 }
 
 export async function GET(request: Request) {
@@ -120,10 +156,11 @@ export async function GET(request: Request) {
 
   try {
     const override = id ? bodyIndex.get(id) : null;
+    const type = override?.type;
     const [wikidata, nasaImage, wikipedia] = await Promise.all([
-      fetchWikidata(name),
+      fetchWikidata(name, type),
       fetchNasaImage(name),
-      fetchWikipedia(name)
+      fetchWikipedia(name, type, override?.wikiTitleOverride)
     ]);
 
     return NextResponse.json({

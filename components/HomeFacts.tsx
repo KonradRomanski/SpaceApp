@@ -3,15 +3,15 @@
 import { useEffect, useMemo, useState } from "react";
 
 type Fact = {
-  year: number;
-  text: string;
-  page: string | null;
+  slug: string;
+  title: string;
+  description: string;
   image: string | null;
 };
 
 type FactsResponse = {
-  date: string;
-  events: Fact[];
+  items: Fact[];
+  total: number;
 };
 
 export function HomeFacts() {
@@ -19,11 +19,11 @@ export function HomeFacts() {
   const [index, setIndex] = useState(0);
 
   useEffect(() => {
-    fetch("/api/home/facts")
+    fetch("/api/facts?limit=8")
       .then((res) => (res.ok ? res.json() : null))
       .then((data: FactsResponse | null) => {
-        if (!data?.events) return;
-        setFacts(data.events);
+        if (!data?.items) return;
+        setFacts(data.items);
       });
   }, []);
 
@@ -69,18 +69,12 @@ export function HomeFacts() {
             <div className="h-36 rounded-xl bg-space-800" />
           )}
           <div>
-            <p className="text-sm text-white/60">{active.year}</p>
-            <p className="text-lg text-white/80">{active.text}</p>
-            {active.page ? (
-              <a
-                href={active.page}
-                target="_blank"
-                rel="noreferrer"
-                className="text-xs text-star-500"
-              >
-                Read more →
-              </a>
-            ) : null}
+            <p className="text-sm text-white/60">Cosmic Fact</p>
+            <p className="text-lg text-white/80">{active.title}</p>
+            <p className="mt-2 text-sm text-white/70">{active.description.slice(0, 140)}...</p>
+            <a href={`/facts/${active.slug}`} className="text-xs text-star-500">
+              Read more →
+            </a>
           </div>
         </div>
       ) : (
@@ -91,13 +85,13 @@ export function HomeFacts() {
         <div className="mt-4 grid gap-3 md:grid-cols-2">
           {facts.slice(0, 6).map((fact, idx) => (
             <button
-              key={`${fact.year}-${idx}`}
+              key={`${fact.slug}-${idx}`}
               onClick={() => setIndex(idx)}
               className={`rounded-2xl border px-3 py-2 text-left text-xs ${
                 idx === index ? "border-star-500 text-white" : "border-white/10 text-white/60"
               }`}
             >
-              {fact.year} · {fact.text.slice(0, 80)}...
+              {fact.title}
             </button>
           ))}
         </div>

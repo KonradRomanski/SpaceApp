@@ -5,6 +5,7 @@ import Link from "next/link";
 import type { Body } from "./TargetMap";
 import { getBodyIcon } from "../lib/icons";
 import { useVerified } from "./VerifiedProvider";
+import { ExpandableText } from "./ExpandableText";
 
 const typeFilters = ["all", "planet", "moon", "star", "dwarf-planet", "asteroid", "galaxy", "black-hole"] as const;
 
@@ -23,6 +24,12 @@ type BodyBrowserProps = {
   detailsLabel: string;
   searchPlaceholder: string;
 };
+
+function isPresent(value?: string | number | null) {
+  if (value === null || value === undefined) return false;
+  if (typeof value === "string" && ["NA", "N/A", "na"].includes(value.trim())) return false;
+  return String(value).trim().length > 0;
+}
 
 export function BodyBrowser({
   bodies,
@@ -145,24 +152,22 @@ export function BodyBrowser({
                   <img src={getBodyIcon(selectedBody)} alt="icon" className="h-16 w-16" />
                 </div>
               )}
-              <p className="text-sm text-white/70">
-                {active?.description ?? selectedBody.description}
-              </p>
+              <ExpandableText text={active?.description ?? selectedBody.description} collapsedLines={5} />
               <div className="grid gap-2 text-xs text-white/60">
-                {selectedBody.atmosphere ? <span>Atmosphere: {selectedBody.atmosphere}</span> : null}
-                {selectedBody.temperatureK ? <span>Avg temperature: {selectedBody.temperatureK} K</span> : null}
-                {selectedBody.composition ? <span>Composition: {selectedBody.composition}</span> : null}
-                {active?.facts?.mass ? <span>Mass: {active.facts.mass}</span> : null}
-                {active?.facts?.radius ? <span>Radius: {active.facts.radius}</span> : null}
-                {active?.facts?.density ? <span>Density: {active.facts.density}</span> : null}
-                {active?.facts?.surfaceGravity ? <span>Surface gravity: {active.facts.surfaceGravity}</span> : null}
-                {active?.facts?.orbitalPeriod ? <span>Orbital period: {active.facts.orbitalPeriod}</span> : null}
-                {active?.facts?.rotationPeriod ? <span>Rotation period: {active.facts.rotationPeriod}</span> : null}
-                {active?.facts?.semiMajorAxis ? <span>Semi-major axis: {active.facts.semiMajorAxis}</span> : null}
-                {active?.facts?.albedo ? <span>Albedo: {active.facts.albedo}</span> : null}
-                {active?.facts?.eccentricity ? <span>Orbital eccentricity: {active.facts.eccentricity}</span> : null}
-                {active?.facts?.periapsis ? <span>Periapsis: {active.facts.periapsis}</span> : null}
-                {!active?.facts ? (
+                {isPresent(selectedBody.atmosphere) ? <span>Atmosphere: {selectedBody.atmosphere}</span> : null}
+                {isPresent(selectedBody.temperatureK) ? <span>Avg temperature: {selectedBody.temperatureK} K</span> : null}
+                {isPresent(selectedBody.composition) ? <span>Composition: {selectedBody.composition}</span> : null}
+                {isPresent(active?.facts?.mass) ? <span>Mass: {active?.facts?.mass}</span> : null}
+                {isPresent(active?.facts?.radius) ? <span>Radius: {active?.facts?.radius}</span> : null}
+                {isPresent(active?.facts?.density) ? <span>Density: {active?.facts?.density}</span> : null}
+                {isPresent(active?.facts?.surfaceGravity) ? <span>Surface gravity: {active?.facts?.surfaceGravity}</span> : null}
+                {isPresent(active?.facts?.orbitalPeriod) ? <span>Orbital period: {active?.facts?.orbitalPeriod}</span> : null}
+                {isPresent(active?.facts?.rotationPeriod) ? <span>Rotation period: {active?.facts?.rotationPeriod}</span> : null}
+                {isPresent(active?.facts?.semiMajorAxis) ? <span>Semi-major axis: {active?.facts?.semiMajorAxis}</span> : null}
+                {isPresent(active?.facts?.albedo) ? <span>Albedo: {active?.facts?.albedo}</span> : null}
+                {isPresent(active?.facts?.eccentricity) ? <span>Orbital eccentricity: {active?.facts?.eccentricity}</span> : null}
+                {isPresent(active?.facts?.periapsis) ? <span>Periapsis: {active?.facts?.periapsis}</span> : null}
+                {!active?.facts && !verified ? (
                   <span>More data available in Verified mode.</span>
                 ) : null}
               </div>

@@ -14,6 +14,7 @@ export type Body = {
   temperatureK?: number;
   composition?: string;
   imageOverride?: string;
+  wikiTitleOverride?: string;
   wikiUrlOverride?: string;
 };
 

@@ -9,6 +9,7 @@ import {
   massUnits
 } from "../lib/units";
 import { dictionaries, type Locale } from "../lib/i18n";
+import { useLocale } from "./LocaleProvider";
 import { InfoTooltip } from "./InfoTooltip";
 import { VelocityChart } from "./VelocityChart";
 import { GammaChart } from "./GammaChart";
@@ -80,8 +81,8 @@ function parseNumber(value: string | null) {
 }
 
 export function Calculator() {
-  const [locale, setLocale] = useState<Locale>("en");
-  const t = dictionaries[locale];
+  const { locale, setLocale } = useLocale();
+  const t = dictionaries[locale as Locale];
 
   const [distanceValue, setDistanceValue] = useState(4.25);
   const [distanceUnit, setDistanceUnit] = useState("ly");

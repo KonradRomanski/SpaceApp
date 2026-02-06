@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import { Space_Grotesk, Work_Sans } from "next/font/google";
 import { NavBar } from "../components/NavBar";
 import { VerifiedProvider } from "../components/VerifiedProvider";
+import { LocaleProvider } from "../components/LocaleProvider";
 
 const spaceGrotesk = Space_Grotesk({
   subsets: ["latin"],
@@ -28,8 +29,10 @@ export default function RootLayout({
     <html lang="en" className={`${spaceGrotesk.variable} ${workSans.variable}`}>
       <body>
         <VerifiedProvider>
-          <NavBar />
-          {children}
+          <LocaleProvider>
+            <NavBar />
+            {children}
+          </LocaleProvider>
         </VerifiedProvider>
       </body>
     </html>

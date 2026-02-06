@@ -9,6 +9,7 @@ import { Map2D } from "../../components/Map2D";
 import { getBodyIcon } from "../../lib/icons";
 import { useVerified } from "../../components/VerifiedProvider";
 import type { Body } from "../../components/TargetMap";
+import { ExpandableText } from "../../components/ExpandableText";
 
 const groups = [
   { id: "planets", label: "Planets", filter: (b: Body) => b.type === "planet" },
@@ -34,6 +35,12 @@ type Enriched = {
   wikiUrl: string | null;
   facts?: Record<string, string | null>;
 };
+
+function isPresent(value?: string | number | null) {
+  if (value === null || value === undefined) return false;
+  if (typeof value === "string" && ["NA", "N/A", "na"].includes(value.trim())) return false;
+  return String(value).trim().length > 0;
+}
 
 export default function MapPage() {
   const searchParams = useSearchParams();
@@ -149,6 +156,13 @@ export default function MapPage() {
     document.addEventListener("fullscreenchange", handleChange);
     return () => document.removeEventListener("fullscreenchange", handleChange);
   }, []);
+
+  useEffect(() => {
+    document.body.style.overflow = fullscreen ? "hidden" : "";
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [fullscreen]);
 
   const focusList = useMemo(() => {
     return [...viewFiltered].sort((a, b) => {
@@ -299,7 +313,9 @@ export default function MapPage() {
           <div
             ref={mapRef}
             className={
-              fullscreen ? "fixed inset-0 z-50 p-6" : "h-[70vh] min-h-[520px]"
+              fullscreen
+                ? "fixed inset-0 z-50 h-screen w-screen bg-space-900 p-6"
+                : "h-[70vh] min-h-[520px]"
             }
           >
             {mode === "3d" ? (
@@ -514,26 +530,26 @@ export default function MapPage() {
                     No image
                   </div>
                 )}
-                <p className="text-sm text-white/70">{info?.description ?? selected.description}</p>
+                <ExpandableText text={info?.description ?? selected.description} collapsedLines={5} />
                 <div className="grid gap-2 text-xs text-white/60">
                   {selected.distanceLy !== undefined ? <span>Distance: {selected.distanceLy} ly</span> : null}
                   {selected.distanceAuFromEarthAvg !== undefined ? (
                     <span>Avg distance from Earth: {selected.distanceAuFromEarthAvg} AU</span>
                   ) : null}
-                  {selected.atmosphere ? <span>Atmosphere: {selected.atmosphere}</span> : null}
-                  {selected.temperatureK ? <span>Avg temperature: {selected.temperatureK} K</span> : null}
-                  {selected.composition ? <span>Composition: {selected.composition}</span> : null}
-                  {info?.facts?.mass ? <span>Mass: {info.facts.mass}</span> : null}
-                  {info?.facts?.radius ? <span>Radius: {info.facts.radius}</span> : null}
-                  {info?.facts?.density ? <span>Density: {info.facts.density}</span> : null}
-                  {info?.facts?.surfaceGravity ? <span>Surface gravity: {info.facts.surfaceGravity}</span> : null}
-                  {info?.facts?.orbitalPeriod ? <span>Orbital period: {info.facts.orbitalPeriod}</span> : null}
-                  {info?.facts?.rotationPeriod ? <span>Rotation period: {info.facts.rotationPeriod}</span> : null}
-                  {info?.facts?.semiMajorAxis ? <span>Semi-major axis: {info.facts.semiMajorAxis}</span> : null}
-                  {info?.facts?.albedo ? <span>Albedo: {info.facts.albedo}</span> : null}
-                  {info?.facts?.eccentricity ? <span>Orbital eccentricity: {info.facts.eccentricity}</span> : null}
-                  {info?.facts?.periapsis ? <span>Periapsis: {info.facts.periapsis}</span> : null}
-                  {!info?.facts ? <span>More data available in Verified mode.</span> : null}
+                  {isPresent(selected.atmosphere) ? <span>Atmosphere: {selected.atmosphere}</span> : null}
+                  {isPresent(selected.temperatureK) ? <span>Avg temperature: {selected.temperatureK} K</span> : null}
+                  {isPresent(selected.composition) ? <span>Composition: {selected.composition}</span> : null}
+                  {isPresent(info?.facts?.mass) ? <span>Mass: {info?.facts?.mass}</span> : null}
+                  {isPresent(info?.facts?.radius) ? <span>Radius: {info?.facts?.radius}</span> : null}
+                  {isPresent(info?.facts?.density) ? <span>Density: {info?.facts?.density}</span> : null}
+                  {isPresent(info?.facts?.surfaceGravity) ? <span>Surface gravity: {info?.facts?.surfaceGravity}</span> : null}
+                  {isPresent(info?.facts?.orbitalPeriod) ? <span>Orbital period: {info?.facts?.orbitalPeriod}</span> : null}
+                  {isPresent(info?.facts?.rotationPeriod) ? <span>Rotation period: {info?.facts?.rotationPeriod}</span> : null}
+                  {isPresent(info?.facts?.semiMajorAxis) ? <span>Semi-major axis: {info?.facts?.semiMajorAxis}</span> : null}
+                  {isPresent(info?.facts?.albedo) ? <span>Albedo: {info?.facts?.albedo}</span> : null}
+                  {isPresent(info?.facts?.eccentricity) ? <span>Orbital eccentricity: {info?.facts?.eccentricity}</span> : null}
+                  {isPresent(info?.facts?.periapsis) ? <span>Periapsis: {info?.facts?.periapsis}</span> : null}
+                  {!info?.facts && !verified ? <span>More data available in Verified mode.</span> : null}
                 </div>
                 <div className="flex flex-wrap gap-3 text-xs">
                   {info?.wikiUrl ? (
