@@ -117,6 +117,11 @@ export function Calculator() {
   const [assistEnabled, setAssistEnabled] = useState(false);
   const [assistBody, setAssistBody] = useState("jupiter");
   const [assistAngle, setAssistAngle] = useState(60);
+  const [assistMode, setAssistMode] = useState<"single" | "multi">("single");
+  const [assistSequence, setAssistSequence] = useState<string[]>(["venus", "earth", "jupiter"]);
+  const [assistWindows, setAssistWindows] = useState<
+    { from: string; to: string; date: string; distanceAu: number }[]
+  >([]);
 
   const allBodies = useMemo(() => bodies as Body[], []);
 
@@ -141,6 +146,27 @@ export function Calculator() {
   const assistBoostKms = assistEnabled
     ? 2 * assistPlanet.speedKms * Math.sin((assistAngle * Math.PI) / 360)
     : 0;
+  const assistAllowed =
+    !!selectedBody?.semiMajorAxisAu && !selectedBody.distanceLy && selectedBody.type !== "star";
+
+  const planetOptions = allBodies.filter(
+    (body) => body.jplCommand && (body.type === "planet" || body.type === "dwarf-planet")
+  );
+
+  function findCommand(id: string) {
+    return planetOptions.find((body) => body.id === id)?.jplCommand ?? null;
+  }
+
+  function labelFor(id: string) {
+    return planetOptions.find((body) => body.id === id)?.name ?? id;
+  }
+
+  useEffect(() => {
+    if (!assistAllowed) {
+      setAssistEnabled(false);
+      setAssistWindows([]);
+    }
+  }, [assistAllowed]);
 
   useEffect(() => {
     if (!selectedBody) return;
@@ -224,6 +250,34 @@ export function Calculator() {
     }
   }
 
+  async function computeAssistWindows() {
+    if (!assistAllowed || assistSequence.length < 2) return;
+    const start = ephemerisDate;
+    const end = addDays(ephemerisDate, windowDays);
+    const results: { from: string; to: string; date: string; distanceAu: number }[] = [];
+    for (let i = 0; i < assistSequence.length - 1; i += 1) {
+      const from = assistSequence[i];
+      const to = assistSequence[i + 1];
+      const center = findCommand(from);
+      const target = findCommand(to);
+      if (!center || !target) continue;
+      const response = await fetch(
+        `/api/ephemeris?center=${encodeURIComponent(center)}&target=${encodeURIComponent(target)}&start=${encodeURIComponent(start)}&end=${encodeURIComponent(end)}&step=${encodeURIComponent(`${windowStepDays} d`)}`
+      );
+      if (!response.ok) continue;
+      const data = await response.json();
+      if (typeof data.bestDistanceAu === "number") {
+        results.push({
+          from,
+          to,
+          date: data.bestDate,
+          distanceAu: data.bestDistanceAu
+        });
+      }
+    }
+    setAssistWindows(results);
+  }
+
   function handleShipChange(value: string) {
     setSelectedShip(value);
     if (value === "custom") return;
@@ -301,6 +355,8 @@ export function Calculator() {
     const assistParam = params.get("assist");
     const assistBodyParam = params.get("assistBody");
     const assistAngleParam = parseNumber(params.get("assistAngle"));
+    const assistModeParam = params.get("assistMode");
+    const assistSeqParam = params.get("assistSeq");
     if (distance !== null) setDistanceValue(distance);
     if (accel !== null) setAccelerationValue(accel);
     if (mass !== null) setShipMassValue(mass);
@@ -314,6 +370,10 @@ export function Calculator() {
     if (assistParam === "1") setAssistEnabled(true);
     if (assistBodyParam) setAssistBody(assistBodyParam);
     if (assistAngleParam !== null) setAssistAngle(assistAngleParam);
+    if (assistModeParam === "multi") setAssistMode("multi");
+    if (assistSeqParam) {
+      setAssistSequence(assistSeqParam.split(",").filter(Boolean));
+    }
   }, []);
 
   function downloadFile(filename: string, content: string, mime: string) {
@@ -345,9 +405,19 @@ export function Calculator() {
     downloadFile("cosmic-journey.csv", csv, "text/csv");
   }
 
-  function exportPDF() {
+  async function exportPDF() {
     if (typeof window === "undefined") return;
-    window.print();
+    const element = document.getElementById("export-area");
+    if (!element) return;
+    const html2canvas = (await import("html2canvas")).default;
+    const { jsPDF } = await import("jspdf");
+    const canvas = await html2canvas(element, { scale: 2, backgroundColor: "#00040C" });
+    const imgData = canvas.toDataURL("image/png");
+    const pdf = new jsPDF("p", "pt", "a4");
+    const width = pdf.internal.pageSize.getWidth();
+    const height = (canvas.height * width) / canvas.width;
+    pdf.addImage(imgData, "PNG", 0, 0, width, height);
+    pdf.save("cosmic-journey.pdf");
   }
 
   function copyShareLink() {
@@ -365,7 +435,9 @@ export function Calculator() {
       date: ephemerisDate,
       assist: assistEnabled ? "1" : "0",
       assistBody,
-      assistAngle: String(assistAngle)
+      assistAngle: String(assistAngle),
+      assistMode,
+      assistSeq: assistSequence.join(",")
     });
     const url = `${window.location.origin}/calculator?${params.toString()}`;
     navigator.clipboard.writeText(url);
@@ -687,12 +759,39 @@ export function Calculator() {
                 <p className="text-xs uppercase tracking-widest text-white/60">Gravity assist</p>
                 <button
                   type="button"
-                  onClick={() => setAssistEnabled((prev) => !prev)}
+                  onClick={() => {
+                    if (!assistAllowed) return;
+                    setAssistEnabled((prev) => !prev);
+                  }}
                   className={`rounded-full border px-3 py-1 text-xs uppercase tracking-widest ${
                     assistEnabled ? "border-star-500 text-star-500" : "border-white/20 text-white/60"
                   }`}
                 >
                   {assistEnabled ? "On" : "Off"}
+                </button>
+              </div>
+              <div className="mt-3 flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  onClick={() => setAssistMode("single")}
+                  className={`rounded-full border px-3 py-1 text-xs uppercase tracking-widest ${
+                    assistMode === "single"
+                      ? "border-star-500 text-star-500"
+                      : "border-white/20 text-white/60"
+                  }`}
+                >
+                  Single
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setAssistMode("multi")}
+                  className={`rounded-full border px-3 py-1 text-xs uppercase tracking-widest ${
+                    assistMode === "multi"
+                      ? "border-star-500 text-star-500"
+                      : "border-white/20 text-white/60"
+                  }`}
+                >
+                  Multi-assist
                 </button>
               </div>
               <div className="mt-3 grid gap-3 md:grid-cols-2">
@@ -701,7 +800,7 @@ export function Calculator() {
                   <select
                     value={assistBody}
                     onChange={(event) => setAssistBody(event.target.value)}
-                    disabled={!assistEnabled}
+                    disabled={!assistEnabled || !assistAllowed}
                   >
                     {assistBodies.map((body) => (
                       <option key={body.id} value={body.id}>
@@ -719,14 +818,82 @@ export function Calculator() {
                     step="5"
                     value={assistAngle}
                     onChange={(event) => setAssistAngle(Number(event.target.value))}
-                    disabled={!assistEnabled}
+                    disabled={!assistEnabled || !assistAllowed}
                   />
                   <span>{assistAngle}°</span>
                 </div>
               </div>
+              {assistEnabled && assistMode === "multi" ? (
+                <div className="mt-3 space-y-3 rounded-2xl border border-white/10 p-3">
+                  {assistSequence.map((leg, idx) => (
+                    <div key={`${leg}-${idx}`} className="flex items-center gap-2">
+                      <select
+                        value={leg}
+                        onChange={(event) => {
+                          const next = [...assistSequence];
+                          next[idx] = event.target.value;
+                          setAssistSequence(next);
+                        }}
+                        disabled={!assistAllowed}
+                      >
+                        {planetOptions.map((body) => (
+                          <option key={body.id} value={body.id}>
+                            {body.name}
+                          </option>
+                        ))}
+                      </select>
+                      {assistSequence.length > 2 ? (
+                        <button
+                          type="button"
+                          className="text-xs text-star-500"
+                          onClick={() =>
+                            setAssistSequence((prev) => prev.filter((_, i) => i !== idx))
+                          }
+                        >
+                          Remove
+                        </button>
+                      ) : null}
+                    </div>
+                  ))}
+                  {assistSequence.length < 4 ? (
+                    <button
+                      type="button"
+                      className="text-xs text-star-500"
+                      onClick={() =>
+                        setAssistSequence((prev) => [...prev, "jupiter"])
+                      }
+                    >
+                      Add leg
+                    </button>
+                  ) : null}
+                  <button
+                    type="button"
+                    className="rounded-full border border-white/20 px-3 py-1 text-xs uppercase tracking-widest text-white/70"
+                    onClick={computeAssistWindows}
+                    disabled={!assistAllowed}
+                  >
+                    Compute windows
+                  </button>
+                  {assistWindows.length ? (
+                    <div className="space-y-1 text-xs text-white/60">
+                      {assistWindows.map((win) => (
+                        <div key={`${win.from}-${win.to}`}>
+                          {labelFor(win.from)} → {labelFor(win.to)}: {win.date} ·{" "}
+                          {win.distanceAu.toFixed(3)} AU
+                        </div>
+                      ))}
+                    </div>
+                  ) : null}
+                </div>
+              ) : null}
               {assistEnabled ? (
                 <p className="mt-2 text-xs text-white/60">
                   Estimated boost: {assistBoostKms.toFixed(2)} km/s (simplified model)
+                </p>
+              ) : null}
+              {!assistAllowed ? (
+                <p className="mt-2 text-xs text-star-400">
+                  Gravity assist is only available for solar-system bodies.
                 </p>
               ) : null}
             </div>
@@ -741,7 +908,7 @@ export function Calculator() {
             {error ? <p className="text-sm text-star-400">{error}</p> : null}
           </form>
 
-          <div className="flex flex-col gap-6">
+          <div id="export-area" className="flex flex-col gap-6">
             <section className="glass card bg-nebula">
               <h2 className="text-xl font-display text-star-500">
                 {t.timeSpeedSummary}
@@ -1007,20 +1174,34 @@ export function Calculator() {
                 current={{
                   distanceValue,
                   distanceUnit,
+                  distanceMode,
+                  ephemerisDate,
                   accelerationValue,
                   accelerationUnit,
                   shipMassValue,
                   shipMassUnit,
-                  propulsionEfficiency
+                  propulsionEfficiency,
+                  assistEnabled,
+                  assistMode,
+                  assistSequence,
+                  assistAngle,
+                  assistBody
                 }}
                 onApply={(scenario) => {
                   setDistanceValue(scenario.distanceValue);
                   setDistanceUnit(scenario.distanceUnit);
+                  if (scenario.distanceMode) setDistanceMode(scenario.distanceMode);
+                  if (scenario.ephemerisDate) setEphemerisDate(scenario.ephemerisDate);
                   setAccelerationValue(scenario.accelerationValue);
                   setAccelerationUnit(scenario.accelerationUnit);
                   setShipMassValue(scenario.shipMassValue);
                   setShipMassUnit(scenario.shipMassUnit);
                   setPropulsionEfficiency(scenario.propulsionEfficiency);
+                  if (scenario.assistEnabled !== undefined) setAssistEnabled(scenario.assistEnabled);
+                  if (scenario.assistMode) setAssistMode(scenario.assistMode);
+                  if (scenario.assistSequence) setAssistSequence(scenario.assistSequence);
+                  if (scenario.assistAngle !== undefined) setAssistAngle(scenario.assistAngle);
+                  if (scenario.assistBody) setAssistBody(scenario.assistBody);
                 }}
                 title={t.scenarioBrowserTitle}
                 saveLabel={t.scenarioSave}

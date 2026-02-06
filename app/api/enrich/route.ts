@@ -56,6 +56,7 @@ function buildWikidataQuery(name: string, type?: string) {
     ?albedo
     ?eccentricity
     ?periapsis ?periapsisUnitLabel
+    ?distanceEarth ?distanceEarthUnitLabel
     WHERE {
     ?item rdfs:label "${safeName}"@en.
     ${typeClause}
@@ -71,6 +72,7 @@ function buildWikidataQuery(name: string, type?: string) {
     OPTIONAL { ?item wdt:P4501 ?albedo. }
     OPTIONAL { ?item wdt:P1096 ?eccentricity. }
     OPTIONAL { ?item p:P2244/psv:P2244 ?periapsisNode. ?periapsisNode wikibase:quantityAmount ?periapsis. ?periapsisNode wikibase:quantityUnit ?periapsisUnit. }
+    OPTIONAL { ?item p:P2583/psv:P2583 ?distanceNode. ?distanceNode wikibase:quantityAmount ?distanceEarth. ?distanceNode wikibase:quantityUnit ?distanceEarthUnit. }
     SERVICE wikibase:label { bd:serviceParam wikibase:language "en". }
   } LIMIT 1`;
 }
@@ -102,7 +104,8 @@ async function fetchWikidata(name: string, type?: string) {
       semiMajorAxis: valueWithUnit(binding.semiMajor, binding.semiMajorUnitLabel),
       albedo: binding.albedo?.value ?? null,
       eccentricity: binding.eccentricity?.value ?? null,
-      periapsis: valueWithUnit(binding.periapsis, binding.periapsisUnitLabel)
+      periapsis: valueWithUnit(binding.periapsis, binding.periapsisUnitLabel),
+      distanceFromEarth: valueWithUnit(binding.distanceEarth, binding.distanceEarthUnitLabel)
     }
   };
 }

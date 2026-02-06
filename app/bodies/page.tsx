@@ -215,6 +215,9 @@ export default function BodiesPage() {
                       New
                     </span>
                   ) : null}
+                  <Link href={`/calculator?body=${body.id}`} className="text-star-500">
+                    Calculator
+                  </Link>
                 </div>
               </Link>
             ))}
@@ -246,6 +249,9 @@ export default function BodiesPage() {
                         </Link>
                         <Link href={`/map?focus=${body.id}`} className="text-xs text-white/60">
                           Map
+                        </Link>
+                        <Link href={`/calculator?body=${body.id}`} className="text-xs text-white/60">
+                          Calculator
                         </Link>
                         {"createdAt" in body && isNew((body as any).createdAt) ? (
                           <span className="rounded-full border border-star-500 px-2 py-0.5 text-[10px] uppercase tracking-widest text-star-500">

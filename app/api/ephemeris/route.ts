@@ -49,6 +49,7 @@ async function fetchVectors(command: string, start: string, stop: string, step: 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const target = searchParams.get("target");
+  const center = searchParams.get("center") ?? "399";
   const date = searchParams.get("date");
   const start = searchParams.get("start");
   const end = searchParams.get("end");
@@ -60,15 +61,15 @@ export async function GET(request: Request) {
 
   try {
     if (start && end) {
-      const [earth, body] = await Promise.all([
-        fetchVectors("399", start, end, step),
+      const [centerVecs, body] = await Promise.all([
+        fetchVectors(center, start, end, step),
         fetchVectors(target, start, end, step)
       ]);
-      if (!earth || !body || earth.length !== body.length) {
+      if (!centerVecs || !body || centerVecs.length !== body.length) {
         return NextResponse.json({ error: "No ephemeris data" }, { status: 404 });
       }
       let best = { date: start, distanceKm: Number.POSITIVE_INFINITY };
-      earth.forEach((vec, index) => {
+      centerVecs.forEach((vec, index) => {
         const b = body[index];
         const dx = b.x - vec.x;
         const dy = b.y - vec.y;
@@ -92,16 +93,16 @@ export async function GET(request: Request) {
     if (!date) {
       return NextResponse.json({ error: "Missing date" }, { status: 400 });
     }
-    const [earth, body] = await Promise.all([
-      fetchVectors("399", date, date, "1 d"),
+    const [centerVecs, body] = await Promise.all([
+      fetchVectors(center, date, date, "1 d"),
       fetchVectors(target, date, date, "1 d")
     ]);
-    if (!earth || !body || !earth[0] || !body[0]) {
+    if (!centerVecs || !body || !centerVecs[0] || !body[0]) {
       return NextResponse.json({ error: "No ephemeris data" }, { status: 404 });
     }
-    const dx = body[0].x - earth[0].x;
-    const dy = body[0].y - earth[0].y;
-    const dz = body[0].z - earth[0].z;
+    const dx = body[0].x - centerVecs[0].x;
+    const dy = body[0].y - centerVecs[0].y;
+    const dz = body[0].z - centerVecs[0].z;
     const distanceKm = Math.sqrt(dx * dx + dy * dy + dz * dz);
     return NextResponse.json({
       date,

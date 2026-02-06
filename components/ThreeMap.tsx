@@ -38,8 +38,9 @@ export function ThreeMap({ bodies, selectedId, onSelect, className, focusTargetI
   const controlsRef = useRef<any>(null);
   const points = useMemo(() => {
     const solar = bodies.filter(
-      (b) => b.distanceAuFromEarthAvg !== undefined && b.id !== "sun"
+      (b) => b.semiMajorAxisAu !== undefined && (b.type === "planet" || b.type === "dwarf-planet")
     );
+    const moons = bodies.filter((b) => b.type === "moon");
     const sunBody = bodies.find((b) => b.id === "sun");
     const stars = bodies.filter((b) => b.distanceLy !== undefined && b.type === "star");
     const galaxies = bodies.filter((b) => b.distanceLy !== undefined && (b.type === "galaxy" || b.type === "black-hole"));
@@ -54,20 +55,45 @@ export function ThreeMap({ bodies, selectedId, onSelect, className, focusTargetI
       )
     );
 
+    const solarPoints = solar.map((body) => {
+      const angle = (hashString(body.id) % 360) * (Math.PI / 180);
+      const radius = mapLog(body.semiMajorAxisAu || 0.001, 0.001, 40, 4, 26);
+      return {
+        ...body,
+        position: new THREE.Vector3(
+          Math.cos(angle) * radius,
+          Math.sin(angle) * radius,
+          Math.sin(angle * 0.7) * 2
+        ),
+        orbitRadius: radius,
+        group: "solar"
+      };
+    });
+
+    const moonPoints = moons.map((moon) => {
+      const parent =
+        solarPoints.find((planet) => Math.abs((planet.semiMajorAxisAu ?? 0) - (moon.semiMajorAxisAu ?? 0)) < 0.1) ??
+        solarPoints.find((planet) => Math.abs((planet.distanceAuFromEarthAvg ?? 0) - (moon.distanceAuFromEarthAvg ?? 0)) < 0.2) ??
+        solarPoints[0];
+      const base = parent?.position ?? new THREE.Vector3(0, 0, 0);
+      const angle = (hashString(moon.id) % 360) * (Math.PI / 180);
+      const orbit = 0.6 + (hashString(moon.name) % 5) * 0.08;
+      return {
+        ...moon,
+        position: new THREE.Vector3(
+          base.x + Math.cos(angle) * orbit,
+          base.y + Math.sin(angle) * orbit,
+          base.z + Math.sin(angle * 0.6) * 0.2
+        ),
+        parentId: parent?.id,
+        orbitRadius: orbit,
+        group: "moon"
+      };
+    });
+
     return {
-      solar: solar.map((body) => {
-        const angle = (hashString(body.id) % 360) * (Math.PI / 180);
-        const radius = mapLog(body.distanceAuFromEarthAvg || 0.001, 0.001, 40, 4, 26);
-        return {
-          ...body,
-          position: new THREE.Vector3(
-            Math.cos(angle) * radius,
-            Math.sin(angle) * radius,
-            Math.sin(angle * 0.7) * 3
-          ),
-          group: "solar"
-        };
-      }),
+      solar: solarPoints,
+      moons: moonPoints,
       stars: stars.map((body) => {
         const angle = (hashString(body.id) % 360) * (Math.PI / 180);
         const radius = mapLog(body.distanceLy || 0.1, 0.1, 15, 30, 60);
@@ -161,7 +187,25 @@ export function ThreeMap({ bodies, selectedId, onSelect, className, focusTargetI
         {points.orbitRadii.map((radius) => (
           <OrbitRing key={`orbit-${radius}`} radius={radius} color="rgba(0,191,255,0.25)" />
         ))}
-        <OrbitRing radius={points.beltRadius} color="rgba(255,215,0,0.2)" />
+        <AsteroidBelt radius={points.beltRadius} />
+
+        {points.orbitRadii.map((radius) => (
+          <OrbitRing key={`orbit-${radius}`} radius={radius} color="rgba(0,191,255,0.25)" />
+        ))}
+        <AsteroidBelt radius={points.beltRadius} />
+
+        {points.moons.map((moon) => {
+          const parent = points.solar.find((planet) => planet.id === moon.parentId);
+          if (!parent) return null;
+          return (
+            <OrbitRing
+              key={`moon-orbit-${moon.id}`}
+              radius={moon.orbitRadius}
+              color="rgba(159,183,255,0.25)"
+              center={parent.position}
+            />
+          );
+        })}
 
         {points.solar.map((body) => (
           <BodyMarker
@@ -169,6 +213,16 @@ export function ThreeMap({ bodies, selectedId, onSelect, className, focusTargetI
             body={body}
             isSelected={body.id === selectedId}
             onSelect={onSelect}
+          />
+        ))}
+
+        {points.moons.map((body) => (
+          <BodyMarker
+            key={body.id}
+            body={body}
+            isSelected={body.id === selectedId}
+            onSelect={onSelect}
+            size={0.45}
           />
         ))}
 
@@ -203,11 +257,24 @@ export function ThreeMap({ bodies, selectedId, onSelect, className, focusTargetI
   );
 }
 
-function OrbitRing({ radius, color }: { radius: number; color: string }) {
+function OrbitRing({
+  radius,
+  color,
+  center
+}: {
+  radius: number;
+  color: string;
+  center?: THREE.Vector3;
+}) {
   const segments = 64;
   const points = Array.from({ length: segments }, (_, i) => {
     const theta = (i / segments) * Math.PI * 2;
-    return new THREE.Vector3(Math.cos(theta) * radius, Math.sin(theta) * radius, 0);
+    const offset = center ?? new THREE.Vector3(0, 0, 0);
+    return new THREE.Vector3(
+      offset.x + Math.cos(theta) * radius,
+      offset.y + Math.sin(theta) * radius,
+      offset.z
+    );
   });
   const geometry = new THREE.BufferGeometry().setFromPoints(points);
   return (
@@ -217,14 +284,25 @@ function OrbitRing({ radius, color }: { radius: number; color: string }) {
   );
 }
 
+function AsteroidBelt({ radius }: { radius: number }) {
+  return (
+    <mesh>
+      <torusGeometry args={[radius, 1.1, 12, 80]} />
+      <meshStandardMaterial color="#C4A86A" transparent opacity={0.18} />
+    </mesh>
+  );
+}
+
 function BodyMarker({
   body,
   isSelected,
-  onSelect
+  onSelect,
+  size = 0.7
 }: {
   body: Body & { position: THREE.Vector3 };
   isSelected: boolean;
   onSelect: (body: Body) => void;
+  size?: number;
 }) {
   const icon = getBodyIcon(body);
   const color = body.distanceLy !== undefined ? "#FFD700" : "#00BFFF";
@@ -240,7 +318,7 @@ function BodyMarker({
   return (
     <group position={body.position}>
       <mesh onClick={() => onSelect(body)}>
-        <sphereGeometry args={[0.7, 22, 22]} />
+        <sphereGeometry args={[size, 22, 22]} />
         <meshStandardMaterial color={color} emissive={color} emissiveIntensity={isSelected ? 0.8 : 0.4} />
       </mesh>
       <mesh onClick={() => onSelect(body)}>

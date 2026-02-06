@@ -73,6 +73,9 @@ export default function BodyDetailPage({ params }: { params: { id: string } }) {
           <Link href={`/map?focus=${body.id}`} className="text-xs text-star-500">
             View on map →
           </Link>
+          <Link href={`/calculator?body=${body.id}`} className="text-xs text-star-500">
+            Open in calculator →
+          </Link>
         </div>
         <header className="flex flex-col gap-4">
           <div className="flex items-center gap-3">
@@ -215,6 +218,12 @@ export default function BodyDetailPage({ params }: { params: { id: string } }) {
               <div>
                 <p className="text-sm text-white/60">Periapsis</p>
                 <p className="text-lg font-semibold">{info?.facts?.periapsis}</p>
+              </div>
+            ) : null}
+            {isPresent(info?.facts?.distanceFromEarth) ? (
+              <div>
+                <p className="text-sm text-white/60">Distance from Earth</p>
+                <p className="text-lg font-semibold">{info?.facts?.distanceFromEarth}</p>
               </div>
             ) : null}
           </div>

@@ -167,6 +167,9 @@ export function BodyBrowser({
                 {isPresent(active?.facts?.albedo) ? <span>Albedo: {active?.facts?.albedo}</span> : null}
                 {isPresent(active?.facts?.eccentricity) ? <span>Orbital eccentricity: {active?.facts?.eccentricity}</span> : null}
                 {isPresent(active?.facts?.periapsis) ? <span>Periapsis: {active?.facts?.periapsis}</span> : null}
+                {isPresent(active?.facts?.distanceFromEarth) ? (
+                  <span>Distance from Earth: {active?.facts?.distanceFromEarth}</span>
+                ) : null}
                 {!active?.facts && !verified ? (
                   <span>More data available in Verified mode.</span>
                 ) : null}

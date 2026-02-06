@@ -150,6 +150,17 @@ export default function MapPage() {
   }, [searchParams]);
 
   useEffect(() => {
+    if (!viewFiltered.length) {
+      setSelectedId(null);
+      return;
+    }
+    if (selectedId && viewFiltered.some((body) => body.id === selectedId)) return;
+    const nextId = viewFiltered[0]?.id ?? "sun";
+    setSelectedId(nextId);
+    setFocusTick((prev) => prev + 1);
+  }, [viewFiltered, selectedId]);
+
+  useEffect(() => {
     function handleChange() {
       setFullscreen(Boolean(document.fullscreenElement));
       window.dispatchEvent(new Event("resize"));
@@ -557,6 +568,9 @@ export default function MapPage() {
                   {isPresent(info?.facts?.albedo) ? <span>Albedo: {info?.facts?.albedo}</span> : null}
                   {isPresent(info?.facts?.eccentricity) ? <span>Orbital eccentricity: {info?.facts?.eccentricity}</span> : null}
                   {isPresent(info?.facts?.periapsis) ? <span>Periapsis: {info?.facts?.periapsis}</span> : null}
+                  {isPresent(info?.facts?.distanceFromEarth) ? (
+                    <span>Distance from Earth: {info?.facts?.distanceFromEarth}</span>
+                  ) : null}
                   {!info?.facts && !verified ? <span>More data available in Verified mode.</span> : null}
                 </div>
                 <div className="flex flex-wrap gap-3 text-xs">
@@ -565,6 +579,12 @@ export default function MapPage() {
                       Wikipedia
                     </a>
                   ) : null}
+                  <Link
+                    href={`/calculator?body=${selected.id}`}
+                    className="text-star-500"
+                  >
+                    Open in calculator
+                  </Link>
                   <a
                     href={`https://images.nasa.gov/search-results?q=${encodeURIComponent(selected.name)}`}
                     target="_blank"

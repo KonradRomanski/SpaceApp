@@ -33,7 +33,10 @@ type Map2DProps = {
 
 export function Map2D({ bodies, selectedId, onSelect, className, zoom, onZoomChange }: Map2DProps) {
   const points = useMemo(() => {
-    const solar = bodies.filter((b) => b.distanceAuFromEarthAvg !== undefined && b.id !== "sun");
+    const solar = bodies.filter(
+      (b) => b.semiMajorAxisAu !== undefined && (b.type === "planet" || b.type === "dwarf-planet")
+    );
+    const moons = bodies.filter((b) => b.type === "moon");
     const sunBody = bodies.find((b) => b.id === "sun");
     const stars = bodies.filter((b) => b.distanceLy !== undefined && b.type === "star");
     const galaxies = bodies.filter((b) => b.distanceLy !== undefined && (b.type === "galaxy" || b.type === "black-hole"));
@@ -41,16 +44,38 @@ export function Map2D({ bodies, selectedId, onSelect, className, zoom, onZoomCha
       (b) => b.distanceAuFromEarthAvg === undefined && b.distanceLy === undefined
     );
 
+    const solarPoints = solar.map((body) => {
+      const angle = (hashString(body.id) % 360) * (Math.PI / 180);
+      const radius = mapLog(body.semiMajorAxisAu || 0.001, 0.001, 40, 60, 200);
+      return {
+        ...body,
+        x: 260 + Math.cos(angle) * radius,
+        y: 260 + Math.sin(angle) * radius,
+        orbitRadius: radius
+      };
+    });
+
+    const moonPoints = moons.map((moon) => {
+      const parent =
+        solarPoints.find((planet) => Math.abs((planet.semiMajorAxisAu ?? 0) - (moon.semiMajorAxisAu ?? 0)) < 0.1) ??
+        solarPoints.find((planet) => Math.abs((planet.distanceAuFromEarthAvg ?? 0) - (moon.distanceAuFromEarthAvg ?? 0)) < 0.2) ??
+        solarPoints[0];
+      const baseX = parent?.x ?? 260;
+      const baseY = parent?.y ?? 260;
+      const angle = (hashString(moon.id) % 360) * (Math.PI / 180);
+      const orbit = 10 + (hashString(moon.name) % 6) * 3;
+      return {
+        ...moon,
+        x: baseX + Math.cos(angle) * orbit,
+        y: baseY + Math.sin(angle) * orbit,
+        parentId: parent?.id,
+        orbitRadius: orbit
+      };
+    });
+
     return {
-      solar: solar.map((body) => {
-        const angle = (hashString(body.id) % 360) * (Math.PI / 180);
-        const radius = mapLog(body.distanceAuFromEarthAvg || 0.001, 0.001, 40, 60, 200);
-        return {
-          ...body,
-          x: 260 + Math.cos(angle) * radius,
-          y: 260 + Math.sin(angle) * radius
-        };
-      }),
+      solar: solarPoints,
+      moons: moonPoints,
       stars: stars.map((body) => {
         const angle = (hashString(body.id) % 360) * (Math.PI / 180);
         const radius = mapLog(body.distanceLy || 0.1, 0.1, 15, 240, 360);
@@ -89,6 +114,7 @@ export function Map2D({ bodies, selectedId, onSelect, className, zoom, onZoomCha
 
   const focusPoint =
     points.solar.find((b) => b.id === selectedId) ||
+    points.moons.find((b) => b.id === selectedId) ||
     points.stars.find((b) => b.id === selectedId) ||
     points.galaxies.find((b) => b.id === selectedId) ||
     points.catalog.find((b) => b.id === selectedId) ||
@@ -117,9 +143,18 @@ export function Map2D({ bodies, selectedId, onSelect, className, zoom, onZoomCha
         </defs>
         <rect width="840" height="840" fill="url(#mapGlow2d)" />
 
-        {[70, 120, 170, 220].map((r) => (
-          <circle key={`solar-${r}`} cx="260" cy="260" r={r} fill="none" stroke="rgba(0,191,255,0.12)" />
+        {points.solar.map((body) => (
+          <circle
+            key={`orbit-${body.id}`}
+            cx="260"
+            cy="260"
+            r={body.orbitRadius}
+            fill="none"
+            stroke="rgba(0,191,255,0.12)"
+          />
         ))}
+
+        <circle cx="260" cy="260" r={120} fill="rgba(196,168,106,0.08)" />
 
         {points.sun ? (
           <g onClick={() => onSelect(points.sun as any)} className="cursor-pointer">
@@ -153,6 +188,35 @@ export function Map2D({ bodies, selectedId, onSelect, className, zoom, onZoomCha
               strokeOpacity={0.2}
             />
             <image href={getBodyIcon(body)} x={body.x - 10} y={body.y - 10} width={20} height={20} />
+          </g>
+        ))}
+
+        {points.moons.map((moon) => {
+          const parent = points.solar.find((planet) => planet.id === moon.parentId);
+          if (!parent) return null;
+          return (
+            <circle
+              key={`moon-orbit-${moon.id}`}
+              cx={parent.x}
+              cy={parent.y}
+              r={moon.orbitRadius}
+              fill="none"
+              stroke="rgba(159,183,255,0.2)"
+            />
+          );
+        })}
+
+        {points.moons.map((body) => (
+          <g key={body.id} onClick={() => onSelect(body)} className="cursor-pointer">
+            <title>{body.name}</title>
+            <circle
+              cx={body.x}
+              cy={body.y}
+              r={body.id === selectedId ? 6 : 4}
+              fill="#9FB7FF"
+              stroke="white"
+              strokeOpacity={0.2}
+            />
           </g>
         ))}
 

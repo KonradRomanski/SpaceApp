@@ -8,11 +8,18 @@ export type Scenario = {
   description: string;
   distanceValue: number;
   distanceUnit: string;
+  distanceMode?: string;
+  ephemerisDate?: string;
   accelerationValue: number;
   accelerationUnit: string;
   shipMassValue: number;
   shipMassUnit: string;
   propulsionEfficiency: number;
+  assistEnabled?: boolean;
+  assistMode?: "single" | "multi";
+  assistSequence?: string[];
+  assistAngle?: number;
+  assistBody?: string;
 };
 
 type ScenarioBrowserProps = {
@@ -29,6 +36,7 @@ const defaultScenarios: Scenario[] = [
     description: "Fast trip to Mars at 1g with a 20t ship.",
     distanceValue: 0.52,
     distanceUnit: "au",
+    distanceMode: "straight",
     accelerationValue: 1,
     accelerationUnit: "g",
     shipMassValue: 20000,
@@ -41,6 +49,7 @@ const defaultScenarios: Scenario[] = [
     description: "Long-haul cruise to Jupiter with gentle acceleration.",
     distanceValue: 4.2,
     distanceUnit: "au",
+    distanceMode: "hohmann",
     accelerationValue: 0.3,
     accelerationUnit: "g",
     shipMassValue: 50000,
@@ -53,6 +62,7 @@ const defaultScenarios: Scenario[] = [
     description: "Interstellar sprint at 1g with a 1,000 kg payload.",
     distanceValue: 4.2465,
     distanceUnit: "ly",
+    distanceMode: "straight",
     accelerationValue: 1,
     accelerationUnit: "g",
     shipMassValue: 1000,

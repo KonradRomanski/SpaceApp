@@ -10,10 +10,19 @@ type Fact = {
   image: string | null;
 };
 
+type Topic = {
+  title: string;
+  description: string;
+  image: string | null;
+};
+
 export default function FactsPage() {
   const [facts, setFacts] = useState<Fact[]>([]);
   const [page, setPage] = useState(0);
   const [loading, setLoading] = useState(false);
+  const [tab, setTab] = useState<"apod" | "categories">("apod");
+  const [category, setCategory] = useState<"planet" | "mission" | "galaxy">("planet");
+  const [topics, setTopics] = useState<Topic[]>([]);
 
   useEffect(() => {
     setLoading(true);
@@ -26,6 +35,16 @@ export default function FactsPage() {
       })
       .finally(() => setLoading(false));
   }, []);
+
+  useEffect(() => {
+    if (tab !== "categories") return;
+    fetch(`/api/facts/categories?type=${category}&limit=24`)
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (!data?.items) return;
+        setTopics(data.items);
+      });
+  }, [tab, category]);
 
   function loadMore() {
     const next = page + 1;
@@ -59,40 +78,96 @@ export default function FactsPage() {
           <p className="text-sm uppercase tracking-[0.3em] text-white/60">Facts</p>
           <h1 className="text-4xl font-display text-gradient md:text-5xl">Cosmic Facts</h1>
           <p className="text-lg text-white/70">
-            Daily astronomy stories from NASA APOD. Open a fact to read inside the app.
+            Daily astronomy stories plus a category browser for planets, missions, and galaxies.
           </p>
         </header>
 
         <div className="flex flex-wrap gap-3">
           <button
-            className="rounded-full border border-white/20 px-4 py-2 text-sm text-white/70"
-            onClick={refresh}
+            className={`rounded-full border px-4 py-2 text-sm ${
+              tab === "apod" ? "border-star-500 text-star-500" : "border-white/20 text-white/70"
+            }`}
+            onClick={() => setTab("apod")}
           >
-            Refresh
+            APOD
           </button>
           <button
-            className="rounded-full border border-white/20 px-4 py-2 text-sm text-white/70"
-            onClick={loadMore}
+            className={`rounded-full border px-4 py-2 text-sm ${
+              tab === "categories" ? "border-star-500 text-star-500" : "border-white/20 text-white/70"
+            }`}
+            onClick={() => setTab("categories")}
           >
-            {loading ? "Loading..." : "Load more"}
+            Category browser
           </button>
         </div>
 
-        <div className="grid gap-6 md:grid-cols-2">
-          {facts.map((fact) => (
-            <Link key={fact.date} href={`/facts/${fact.date}`} className="glass card">
-              {fact.image ? (
-                <img src={fact.image} alt={fact.title} className="h-40 w-full rounded-2xl object-cover" />
-              ) : (
-                <div className="h-40 rounded-2xl bg-space-800" />
-              )}
-              <h2 className="mt-4 text-xl font-display text-star-500">{fact.title}</h2>
-              <p className="mt-2 text-xs text-white/50">{fact.date}</p>
-              <p className="mt-2 text-sm text-white/70">{fact.description.slice(0, 140)}...</p>
-              <p className="mt-4 text-xs uppercase tracking-widest text-white/50">Open</p>
-            </Link>
-          ))}
-        </div>
+        {tab === "apod" ? (
+          <div className="flex flex-wrap gap-3">
+            <button
+              className="rounded-full border border-white/20 px-4 py-2 text-sm text-white/70"
+              onClick={refresh}
+            >
+              Refresh
+            </button>
+            <button
+              className="rounded-full border border-white/20 px-4 py-2 text-sm text-white/70"
+              onClick={loadMore}
+            >
+              {loading ? "Loading..." : "Load more"}
+            </button>
+          </div>
+        ) : (
+          <div className="flex flex-wrap gap-2">
+            {(["planet", "mission", "galaxy"] as const).map((item) => (
+              <button
+                key={item}
+                className={`rounded-full border px-3 py-1 text-xs uppercase tracking-widest ${
+                  category === item ? "border-star-500 text-star-500" : "border-white/15 text-white/60"
+                }`}
+                onClick={() => setCategory(item)}
+              >
+                {item}
+              </button>
+            ))}
+          </div>
+        )}
+
+        {tab === "apod" ? (
+          <div className="grid gap-6 md:grid-cols-2">
+            {facts.map((fact) => (
+              <Link key={fact.date} href={`/facts/${fact.date}`} className="glass card">
+                {fact.image ? (
+                  <img src={fact.image} alt={fact.title} className="h-40 w-full rounded-2xl object-cover" />
+                ) : (
+                  <div className="h-40 rounded-2xl bg-space-800" />
+                )}
+                <h2 className="mt-4 text-xl font-display text-star-500">{fact.title}</h2>
+                <p className="mt-2 text-xs text-white/50">{fact.date}</p>
+                <p className="mt-2 text-sm text-white/70">{fact.description.slice(0, 140)}...</p>
+                <p className="mt-4 text-xs uppercase tracking-widest text-white/50">Open</p>
+              </Link>
+            ))}
+          </div>
+        ) : (
+          <div className="grid gap-6 md:grid-cols-2">
+            {topics.map((topic) => (
+              <Link
+                key={topic.title}
+                href={`/facts/topic/${encodeURIComponent(topic.title)}`}
+                className="glass card"
+              >
+                {topic.image ? (
+                  <img src={topic.image} alt={topic.title} className="h-40 w-full rounded-2xl object-cover" />
+                ) : (
+                  <div className="h-40 rounded-2xl bg-space-800" />
+                )}
+                <h2 className="mt-4 text-xl font-display text-star-500">{topic.title}</h2>
+                <p className="mt-2 text-sm text-white/70">{topic.description.slice(0, 140)}...</p>
+                <p className="mt-4 text-xs uppercase tracking-widest text-white/50">Open</p>
+              </Link>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );

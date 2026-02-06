@@ -10,6 +10,8 @@
   },
   "dependencies": {
     "chart.js": "^4.4.2",
+    "html2canvas": "^1.4.1",
+    "jspdf": "^2.5.1",
     "mathjs": "^13.0.0",
     "next": "^14.2.5",
     "react": "^18.3.1",
