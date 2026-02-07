@@ -33,6 +33,7 @@ type Map2DProps = {
   focusTick?: number;
   stickToSun?: boolean;
   moonOrbitKm?: Record<string, number>;
+  animateOrbits?: boolean;
 };
 
 export function Map2D({
@@ -45,7 +46,8 @@ export function Map2D({
   focusTargetId,
   focusTick,
   stickToSun,
-  moonOrbitKm
+  moonOrbitKm,
+  animateOrbits = true
 }: Map2DProps) {
   const [focusId, setFocusId] = useState<string | null>(null);
   const [phase, setPhase] = useState(0);
@@ -62,7 +64,9 @@ export function Map2D({
     );
 
     const solarPoints = solar.map((body) => {
-      const angle = (hashString(body.id) % 360) * (Math.PI / 180);
+      const baseAngle = (hashString(body.id) % 360) * (Math.PI / 180);
+      const speed = 0.003 / Math.max(1, body.semiMajorAxisAu ?? 1);
+      const angle = baseAngle + (animateOrbits ? phase * speed : 0);
       const radius = mapLog(body.semiMajorAxisAu || 0.001, 0.001, 40, 60, 200);
       return {
         ...body,
@@ -140,11 +144,12 @@ export function Map2D({
   }, [focusTargetId, focusTick]);
 
   useEffect(() => {
+    if (!animateOrbits) return;
     const timer = setInterval(() => {
       setPhase((prev) => prev + 0.012);
     }, 60);
     return () => clearInterval(timer);
-  }, []);
+  }, [animateOrbits]);
 
   const focusPoint = stickToSun
     ? points.sun

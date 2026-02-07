@@ -287,7 +287,9 @@ export default function BodiesPage() {
                 ))}
               </div>
             ) : (
-              <p className="mt-4 text-sm text-white/60">No saved ships yet.</p>
+              <p className="mt-4 text-sm text-white/60">
+                No saved ships yet. Select a ship above and click “Save selected”.
+              </p>
             )}
           </section>
         )}

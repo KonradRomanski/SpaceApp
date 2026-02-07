@@ -33,6 +33,7 @@ type ThreeMapProps = {
   focusTargetId?: string | null;
   focusTick?: number;
   moonOrbitKm?: Record<string, number>;
+  animateOrbits?: boolean;
 };
 
 export function ThreeMap({
@@ -42,7 +43,8 @@ export function ThreeMap({
   className,
   focusTargetId,
   focusTick,
-  moonOrbitKm
+  moonOrbitKm,
+  animateOrbits = true
 }: ThreeMapProps) {
   const controlsRef = useRef<any>(null);
   const points = useMemo(() => {
@@ -65,7 +67,9 @@ export function ThreeMap({
     );
 
     const solarPoints = solar.map((body) => {
-      const angle = (hashString(body.id) % 360) * (Math.PI / 180);
+      const baseAngle = (hashString(body.id) % 360) * (Math.PI / 180);
+      const speed = 0.005 / Math.max(1, body.semiMajorAxisAu ?? 1);
+      const angle = baseAngle + (animateOrbits ? performance.now() * 0.00005 * speed : 0);
       const radius = mapLog(body.semiMajorAxisAu || 0.001, 0.001, 40, 4, 26);
       return {
         ...body,
@@ -171,6 +175,9 @@ export function ThreeMap({
       null;
     if (!target) return;
     controlsRef.current.target.set(target.x, target.y, target.z);
+    const cam = controlsRef.current.object;
+    cam.position.set(target.x + 8, target.y + 6, target.z + 18);
+    cam.updateProjectionMatrix?.();
   }, [focusTargetId, focusTick, points]);
 
   return (
@@ -240,6 +247,7 @@ export function ThreeMap({
             isSelected={body.id === selectedId}
             onSelect={onSelect}
             size={0.65}
+            animate={animateOrbits}
           />
         ))}
 
@@ -367,7 +375,8 @@ function MoonMarker({
   body,
   isSelected,
   onSelect,
-  size = 0.7
+  size = 0.7,
+  animate = true
 }: {
   body: Body & {
     position: THREE.Vector3;
@@ -379,6 +388,7 @@ function MoonMarker({
   isSelected: boolean;
   onSelect: (body: Body) => void;
   size?: number;
+  animate?: boolean;
 }) {
   const icon = getBodyIcon(body);
   const color = "#9FB7FF";
@@ -387,7 +397,7 @@ function MoonMarker({
 
   useFrame(({ clock }) => {
     if (!ringRef.current || !groupRef.current) return;
-    const angle = body.baseAngle + clock.elapsedTime * body.speed;
+    const angle = body.baseAngle + (animate ? clock.elapsedTime * body.speed : 0);
     const x = body.center.x + Math.cos(angle) * body.orbitRadius;
     const y = body.center.y + Math.sin(angle) * body.orbitRadius;
     const z = body.center.z + Math.sin(angle * 0.6) * 0.2;

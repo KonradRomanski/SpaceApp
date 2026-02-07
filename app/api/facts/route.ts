@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import fallbackFacts from "../../data/facts.json";
 
 export const revalidate = 21600;
 
@@ -52,8 +53,11 @@ export async function GET(request: Request) {
             ? item.url
             : item.thumbnail_url ?? null
       }));
+    if (!items.length) {
+      return NextResponse.json({ items: fallbackFacts });
+    }
     return NextResponse.json({ items });
   } catch {
-    return NextResponse.json({ items: [] });
+    return NextResponse.json({ items: fallbackFacts });
   }
 }

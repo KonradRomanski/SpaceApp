@@ -467,6 +467,10 @@ export function Calculator() {
     : null;
   const earthYears = earthSeconds && Number.isFinite(earthSeconds) ? earthSeconds / 31557600 : null;
   const shipYears = shipSeconds && Number.isFinite(shipSeconds) ? shipSeconds / 31557600 : null;
+  const dilationRatio =
+    earthSeconds && shipSeconds && Number.isFinite(earthSeconds) && Number.isFinite(shipSeconds)
+      ? (earthSeconds / shipSeconds).toFixed(2)
+      : null;
 
   const shipMassKg = shipMassValue * (massUnitMap[shipMassUnit] ?? 1);
   const fuelMassKg = result ? parseNumber(result.results.fuelMassKg) : null;
@@ -598,7 +602,7 @@ export function Calculator() {
             </div>
 
             <div className="grid gap-4 md:grid-cols-3">
-              <div className="flex flex-col gap-2">
+              <div className="flex min-w-0 flex-col gap-2">
                 <InfoTooltip label={t.distance} description={t.distanceDesc} />
                 <div className="flex items-center gap-2">
                   <input
@@ -606,10 +610,12 @@ export function Calculator() {
                     min="0"
                     step="any"
                     value={distanceValue}
+                    className="w-full min-w-0"
                     onChange={(event) => setDistanceValue(Number(event.target.value))}
                   />
                   <select
                     value={distanceUnit}
+                    className="w-28"
                     onChange={(event) => setDistanceUnit(event.target.value)}
                   >
                     {distanceUnits.map((unit) => (
@@ -620,7 +626,7 @@ export function Calculator() {
                   </select>
                 </div>
               </div>
-              <div className="flex flex-col gap-2">
+              <div className="flex min-w-0 flex-col gap-2">
                 <InfoTooltip label={t.acceleration} description={t.accelerationDesc} />
                 <div className="flex items-center gap-2">
                   <input
@@ -628,12 +634,14 @@ export function Calculator() {
                     min="0.1"
                     step="0.1"
                     value={accelerationValue}
+                    className="w-full min-w-0"
                     onChange={(event) =>
                       setAccelerationValue(Number(event.target.value))
                     }
                   />
                   <select
                     value={accelerationUnit}
+                    className="w-28"
                     onChange={(event) => setAccelerationUnit(event.target.value)}
                   >
                     {accelerationUnits.map((unit) => (
@@ -652,7 +660,7 @@ export function Calculator() {
                   <p className="text-xs text-star-400">{accelWarning}</p>
                 ) : null}
               </div>
-              <div className="flex flex-col gap-2">
+              <div className="flex min-w-0 flex-col gap-2">
                 <InfoTooltip label={t.shipMass} description={t.shipMassDesc} />
                 <div className="flex items-center gap-2">
                   <input
@@ -660,10 +668,12 @@ export function Calculator() {
                     min="1"
                     step="1"
                     value={shipMassValue}
+                    className="w-full min-w-0"
                     onChange={(event) => setShipMassValue(Number(event.target.value))}
                   />
                   <select
                     value={shipMassUnit}
+                    className="w-28"
                     onChange={(event) => setShipMassUnit(event.target.value)}
                   >
                     {massUnits.map((unit) => (
@@ -676,7 +686,7 @@ export function Calculator() {
               </div>
             </div>
 
-            <div className="flex items-center justify-between rounded-2xl border border-white/10 px-3 py-2 text-xs text-white/70">
+            <div className="inline-flex items-center justify-between gap-3 rounded-full border border-white/10 px-3 py-2 text-xs text-white/70 self-start">
               <span>Cost estimates</span>
               <button
                 type="button"
@@ -939,8 +949,8 @@ export function Calculator() {
             <h2 className="text-xl font-display text-star-500">
               {t.timeSpeedSummary}
             </h2>
-            {result ? (
-              <div className="mt-4 grid gap-4 md:grid-cols-2">
+              {result ? (
+                <div className="mt-4 grid gap-4 md:grid-cols-2">
                 <div>
                   <InfoTooltip label={t.shipTime} description={t.shipTimeDesc} />
                   <p className="text-2xl font-semibold">
@@ -968,16 +978,21 @@ export function Calculator() {
                     {result.results.vmaxMs} m/s
                   </p>
                 </div>
-                <div>
-                  <InfoTooltip label={t.rapidity} description={t.rapidityDesc} />
-                  <p className="text-2xl font-semibold">
-                    {result.results.rapidity}
-                  </p>
+                  <div>
+                    <InfoTooltip label={t.rapidity} description={t.rapidityDesc} />
+                    <p className="text-2xl font-semibold">
+                      {result.results.rapidity}
+                    </p>
+                  </div>
                 </div>
-              </div>
-            ) : (
-              <p className="mt-4 text-white/60">Run a simulation to see the results.</p>
-            )}
+              ) : (
+                <p className="mt-4 text-white/60">Run a simulation to see the results.</p>
+              )}
+              {dilationRatio ? (
+                <p className="mt-3 text-xs text-white/60">
+                  Time dilation ratio (Earth / Ship): {dilationRatio}×
+                </p>
+              ) : null}
             {result?.rangeResults ? (
               <div className="mt-4 rounded-2xl border border-white/10 p-3 text-xs text-white/60">
                 <p>Min distance: {result.rangeResults.minDistanceMeters} m</p>
@@ -1007,18 +1022,21 @@ export function Calculator() {
                       <p className="text-lg font-semibold">
                         {result.comparisons.tsarBomba ?? "n/a"}x
                       </p>
+                      <p className="text-[11px] text-white/50">50 Mt nuclear test (1961).</p>
                     </div>
                     <div className="rounded-2xl border border-white/10 p-4">
                       <p className="text-xs text-white/60">Global year</p>
                       <p className="text-lg font-semibold">
                         {result.comparisons.globalYear ?? "n/a"}x
                       </p>
+                      <p className="text-[11px] text-white/50">World annual energy use.</p>
                     </div>
                     <div className="rounded-2xl border border-white/10 p-4">
                       <p className="text-xs text-white/60">Sun (1 sec)</p>
                       <p className="text-lg font-semibold">
                         {result.comparisons.sunPerSecond ?? "n/a"}x
                       </p>
+                      <p className="text-[11px] text-white/50">Solar output per second.</p>
                     </div>
                   </div>
                   <div className="grid gap-3 md:grid-cols-2">
@@ -1027,12 +1045,14 @@ export function Calculator() {
                       <p className="text-lg font-semibold">
                         {result.comparisons.hiroshima ?? "n/a"}x
                       </p>
+                      <p className="text-[11px] text-white/50">~15 kt TNT equivalent.</p>
                     </div>
                     <div className="rounded-2xl border border-white/10 p-4">
                       <p className="text-xs text-white/60">LHC beam</p>
                       <p className="text-lg font-semibold">
                         {result.comparisons.lhcBeam ?? "n/a"}x
                       </p>
+                      <p className="text-[11px] text-white/50">Stored beam energy (LHC).</p>
                     </div>
                   </div>
                   {showCosts ? (

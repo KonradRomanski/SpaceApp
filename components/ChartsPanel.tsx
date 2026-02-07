@@ -91,7 +91,7 @@ export function ChartsPanel({
           </h3>
           <p className="text-xs text-white/60">{labels.chartEnergySplitDesc}</p>
         </div>
-        <div className="mt-4 h-[240px]">
+        <div className="mt-4 h-[260px]">
           <Bar
             data={{
               labels: ["Tsar Bomba", "Global year", "Sun (1s)", "Hiroshima", "LHC beam"],
@@ -102,7 +102,9 @@ export function ChartsPanel({
                   backgroundColor: [
                     "rgba(255,215,0,0.6)",
                     "rgba(0,191,255,0.6)",
-                    "rgba(255,255,255,0.6)"
+                    "rgba(255,255,255,0.6)",
+                    "rgba(255,99,132,0.6)",
+                    "rgba(155,89,182,0.6)"
                   ]
                 }
               ]
@@ -113,7 +115,14 @@ export function ChartsPanel({
               scales: {
                 x: { ticks: { color: "rgba(255,255,255,0.7)" } },
                 y: {
-                  ticks: { color: "rgba(255,255,255,0.7)" },
+                  ticks: {
+                    color: "rgba(255,255,255,0.7)",
+                    callback: (value) => {
+                      const num = Number(value);
+                      if (!Number.isFinite(num)) return String(value);
+                      return Intl.NumberFormat("en-US", { notation: "compact", maximumFractionDigits: 2 }).format(num);
+                    }
+                  },
                   grid: { color: "rgba(255,255,255,0.08)" }
                 }
               }

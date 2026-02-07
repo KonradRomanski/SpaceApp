@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { create, all, MathJsStatic } from "mathjs";
+import { formatDuration } from "../../../lib/format";
 
 const math = create(all, { number: "BigNumber", precision: 64 }) as MathJsStatic;
 
@@ -48,20 +49,6 @@ function formatFriendly(value: unknown) {
     return num.toExponential(3);
   }
   return num.toLocaleString("en-US", { maximumFractionDigits: 4 });
-}
-
-function formatDuration(seconds: number | null) {
-  if (!seconds || seconds <= 0) return "n/a";
-  const minute = 60;
-  const hour = 3600;
-  const day = 86400;
-  const year = 31557600;
-
-  if (seconds >= year) return `${(seconds / year).toFixed(2)} years`;
-  if (seconds >= day) return `${(seconds / day).toFixed(2)} days`;
-  if (seconds >= hour) return `${(seconds / hour).toFixed(2)} hours`;
-  if (seconds >= minute) return `${(seconds / minute).toFixed(2)} minutes`;
-  return `${seconds.toFixed(2)} seconds`;
 }
 
 function compute(distanceMeters: number, accelerationMs2: number, shipMassKg: number) {

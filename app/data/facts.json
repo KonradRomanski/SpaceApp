@@ -1,0 +1,38 @@
+[
+  {
+    "date": "2024-01-01",
+    "title": "Apollo 11: First Moon Landing",
+    "description": "Apollo 11 landed the first humans on the Moon in 1969, marking a pivotal moment in human spaceflight.",
+    "image": null
+  },
+  {
+    "date": "2024-01-02",
+    "title": "Voyager 1: Interstellar Traveler",
+    "description": "Voyager 1 is the farthest human-made object from Earth and continues to transmit data from interstellar space.",
+    "image": null
+  },
+  {
+    "date": "2024-01-03",
+    "title": "James Webb Space Telescope",
+    "description": "JWST observes the universe in infrared, revealing early galaxies and star formation.",
+    "image": null
+  },
+  {
+    "date": "2024-01-04",
+    "title": "Europa: Ocean World",
+    "description": "Jupiter’s moon Europa likely hosts a subsurface ocean beneath an icy crust.",
+    "image": null
+  },
+  {
+    "date": "2024-01-05",
+    "title": "Sagittarius A*",
+    "description": "The Milky Way’s central supermassive black hole has a mass of about 4 million Suns.",
+    "image": null
+  },
+  {
+    "date": "2024-01-06",
+    "title": "Exoplanets",
+    "description": "Thousands of planets have been discovered around other stars using transits and radial velocity.",
+    "image": null
+  }
+]

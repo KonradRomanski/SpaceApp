@@ -52,12 +52,14 @@ export default function MapPage() {
   const [mode, setMode] = useState<"3d" | "2d">("3d");
   const [zoom2d, setZoom2d] = useState(1);
   const [stickToSun, setStickToSun] = useState(false);
+  const [animateOrbits, setAnimateOrbits] = useState(true);
   const [fullscreen, setFullscreen] = useState(false);
   const mapRef = useRef<HTMLDivElement | null>(null);
   const [panelTab, setPanelTab] = useState<"info" | "list" | "discoveries">("info");
   const [query, setQuery] = useState("");
   const [listSort, setListSort] = useState<"name" | "type" | "distance">("name");
   const [listDir, setListDir] = useState<"asc" | "desc">("asc");
+  const [moonFocus, setMoonFocus] = useState(false);
   const [view, setView] = useState<(typeof views)[number]["id"]>("all");
   const [focusTick, setFocusTick] = useState(0);
   const [focusPathActive, setFocusPathActive] = useState(false);
@@ -141,9 +143,31 @@ export default function MapPage() {
     return true;
   });
 
+  const activeBodies = useMemo(() => {
+    if (!moonFocus || !selected) return viewFiltered;
+    if (selected.type !== "planet" && selected.type !== "dwarf-planet") return viewFiltered;
+    const anchorSemi = selected.semiMajorAxisAu ?? null;
+    const anchorDistance = selected.distanceAuFromEarthAvg ?? null;
+    return viewFiltered.filter((body) => {
+      if (body.id === selected.id) return true;
+      if (body.type !== "moon") return false;
+      const semi = body.semiMajorAxisAu ?? null;
+      const dist = body.distanceAuFromEarthAvg ?? null;
+      const semiMatch = anchorSemi && semi ? Math.abs(semi - anchorSemi) < 0.2 : false;
+      const distMatch = anchorDistance && dist ? Math.abs(dist - anchorDistance) < 0.2 : false;
+      return semiMatch || distMatch;
+    });
+  }, [moonFocus, selected, viewFiltered]);
+
   const selected = selectedId
     ? allBodies.find((body) => body.id === selectedId) ?? null
     : null;
+
+  useEffect(() => {
+    if (!selected || (selected.type !== "planet" && selected.type !== "dwarf-planet")) {
+      setMoonFocus(false);
+    }
+  }, [selected]);
 
   useEffect(() => {
     if (!verified || !selected || enriched[selected.id]) return;
@@ -199,16 +223,16 @@ export default function MapPage() {
   }, [fullscreen]);
 
   const focusList = useMemo(() => {
-    return [...viewFiltered].sort((a, b) => {
+    return [...activeBodies].sort((a, b) => {
       const aDist = a.distanceAuFromEarthAvg ?? a.distanceLy ?? 999999;
       const bDist = b.distanceAuFromEarthAvg ?? b.distanceLy ?? 999999;
       return aDist - bDist;
     });
-  }, [viewFiltered]);
+  }, [activeBodies]);
 
   const listItems = useMemo(() => {
     const q = query.trim().toLowerCase();
-    const filteredList = viewFiltered.filter((body) =>
+    const filteredList = activeBodies.filter((body) =>
       body.name.toLowerCase().includes(q)
     );
     const sorted = [...filteredList].sort((a, b) => {
@@ -223,7 +247,7 @@ export default function MapPage() {
       return listDir === "asc" ? compare : -compare;
     });
     return sorted;
-  }, [viewFiltered, query, listSort, listDir]);
+  }, [activeBodies, query, listSort, listDir]);
 
   useEffect(() => {
     if (!focusPathActive || focusList.length === 0) return;
@@ -380,18 +404,19 @@ export default function MapPage() {
             {mode === "3d" ? (
               <ThreeMap
                 key={`three-${fullscreen}`}
-                bodies={viewFiltered}
+                bodies={activeBodies}
                 selectedId={selectedId}
                 onSelect={(body) => setSelectedId(body.id)}
                 className="glass card h-full overflow-hidden"
                 focusTargetId={selectedId}
                 focusTick={focusTick}
                 moonOrbitKm={moonOrbitKm}
+                animateOrbits={animateOrbits}
               />
             ) : (
               <Map2D
                 key={`map2d-${fullscreen}`}
-                bodies={viewFiltered}
+                bodies={activeBodies}
                 selectedId={selectedId}
                 onSelect={(body) => setSelectedId(body.id)}
                 className="glass card h-full overflow-hidden"
@@ -401,6 +426,7 @@ export default function MapPage() {
                 focusTick={focusTick}
                 stickToSun={stickToSun}
                 moonOrbitKm={moonOrbitKm}
+                animateOrbits={animateOrbits}
               />
             )}
             {mode === "2d" ? (
@@ -426,12 +452,33 @@ export default function MapPage() {
                 >
                   {stickToSun ? "Stick to Sun: On" : "Stick to Sun: Off"}
                 </button>
+                <button
+                  className={`rounded-full border px-2 py-1 ${
+                    animateOrbits ? "border-star-500 text-star-500" : "border-white/20 text-white/70"
+                  }`}
+                  onClick={() => setAnimateOrbits((prev) => !prev)}
+                >
+                  {animateOrbits ? "Orbits: On" : "Orbits: Off"}
+                </button>
+                {selected && (selected.type === "planet" || selected.type === "dwarf-planet") ? (
+                  <button
+                    className={`rounded-full border px-2 py-1 ${
+                      moonFocus ? "border-star-500 text-star-500" : "border-white/20 text-white/70"
+                    }`}
+                    onClick={() => setMoonFocus((prev) => !prev)}
+                  >
+                    {moonFocus ? "Moon focus: On" : "Moon focus: Off"}
+                  </button>
+                ) : null}
               </div>
             ) : null}
             <div className="mt-3 flex items-center gap-3 text-xs text-white/60">
               <button
                 className="rounded-full border border-white/20 px-3 py-1 text-xs uppercase tracking-widest"
-                onClick={() => setFocusTick((prev) => prev + 1)}
+                onClick={() => {
+                  setFocusTick((prev) => prev + 1);
+                  if (mode === "2d") setZoom2d(1);
+                }}
               >
                 Focus selected
               </button>
