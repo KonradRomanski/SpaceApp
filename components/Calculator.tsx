@@ -47,6 +47,8 @@ type CalculationResponse = {
     tsarBomba: string | null;
     globalYear: string | null;
     sunPerSecond: string | null;
+    lhcBeam?: string | null;
+    hiroshima?: string | null;
   };
   chart: { unitLabel: string; data: { t: number; v: number }[] } | null;
   rangeResults?: {
@@ -104,6 +106,7 @@ export function Calculator() {
   const [currency, setCurrency] = useState("USD");
   const [fxRates, setFxRates] = useState<Record<string, number>>({});
   const [selectedShip, setSelectedShip] = useState("custom");
+  const [showCosts, setShowCosts] = useState(true);
   const [selectedBodyId, setSelectedBodyId] = useState<string | null>(
     "proxima-centauri"
   );
@@ -167,6 +170,12 @@ export function Calculator() {
       setAssistWindows([]);
     }
   }, [assistAllowed]);
+
+  useEffect(() => {
+    if (!assistEnabled) {
+      setAssistWindows([]);
+    }
+  }, [assistEnabled]);
 
   useEffect(() => {
     if (!selectedBody) return;
@@ -468,6 +477,16 @@ export function Calculator() {
   const shipCostDisplay = shipCostUsd * rate;
   const fuelCostDisplay = fuelCostUsd ? fuelCostUsd * rate : null;
   const totalCostDisplay = totalCostUsd * rate;
+  const compactFormatter = useMemo(
+    () =>
+      new Intl.NumberFormat("en-US", {
+        style: "currency",
+        currency,
+        notation: "compact",
+        maximumFractionDigits: 2
+      }),
+    [currency]
+  );
 
   return (
     <div className="min-h-screen px-6 pb-16 md:px-16">
@@ -578,44 +597,52 @@ export function Calculator() {
               ) : null}
             </div>
 
-            <div className="grid gap-4 md:grid-cols-[1.1fr_0.9fr]">
+            <div className="grid gap-4 md:grid-cols-3">
               <div className="flex flex-col gap-2">
                 <InfoTooltip label={t.distance} description={t.distanceDesc} />
-                <input
-                  type="number"
-                  min="0"
-                  step="any"
-                  value={distanceValue}
-                  onChange={(event) => setDistanceValue(Number(event.target.value))}
-                />
+                <div className="flex items-center gap-2">
+                  <input
+                    type="number"
+                    min="0"
+                    step="any"
+                    value={distanceValue}
+                    onChange={(event) => setDistanceValue(Number(event.target.value))}
+                  />
+                  <select
+                    value={distanceUnit}
+                    onChange={(event) => setDistanceUnit(event.target.value)}
+                  >
+                    {distanceUnits.map((unit) => (
+                      <option key={unit.value} value={unit.value}>
+                        {unit.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
               </div>
-              <div className="flex flex-col gap-2">
-                <label>Unit</label>
-                <select
-                  value={distanceUnit}
-                  onChange={(event) => setDistanceUnit(event.target.value)}
-                >
-                  {distanceUnits.map((unit) => (
-                    <option key={unit.value} value={unit.value}>
-                      {unit.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
-
-            <div className="grid gap-4 md:grid-cols-[1.1fr_0.9fr]">
               <div className="flex flex-col gap-2">
                 <InfoTooltip label={t.acceleration} description={t.accelerationDesc} />
-                <input
-                  type="number"
-                  min="0.1"
-                  step="0.1"
-                  value={accelerationValue}
-                  onChange={(event) =>
-                    setAccelerationValue(Number(event.target.value))
-                  }
-                />
+                <div className="flex items-center gap-2">
+                  <input
+                    type="number"
+                    min="0.1"
+                    step="0.1"
+                    value={accelerationValue}
+                    onChange={(event) =>
+                      setAccelerationValue(Number(event.target.value))
+                    }
+                  />
+                  <select
+                    value={accelerationUnit}
+                    onChange={(event) => setAccelerationUnit(event.target.value)}
+                  >
+                    {accelerationUnits.map((unit) => (
+                      <option key={unit.value} value={unit.value}>
+                        {unit.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
                 {accelerationUnit === "g" && accelerationValue > 1.5 ? (
                   <p className="text-xs text-star-400">
                     Sustained acceleration above 1.5 g is likely unsafe for humans.
@@ -626,75 +653,77 @@ export function Calculator() {
                 ) : null}
               </div>
               <div className="flex flex-col gap-2">
-                <label>Unit</label>
-                <select
-                  value={accelerationUnit}
-                  onChange={(event) => setAccelerationUnit(event.target.value)}
-                >
-                  {accelerationUnits.map((unit) => (
-                    <option key={unit.value} value={unit.value}>
-                      {unit.label}
-                    </option>
-                  ))}
-                </select>
+                <InfoTooltip label={t.shipMass} description={t.shipMassDesc} />
+                <div className="flex items-center gap-2">
+                  <input
+                    type="number"
+                    min="1"
+                    step="1"
+                    value={shipMassValue}
+                    onChange={(event) => setShipMassValue(Number(event.target.value))}
+                  />
+                  <select
+                    value={shipMassUnit}
+                    onChange={(event) => setShipMassUnit(event.target.value)}
+                  >
+                    {massUnits.map((unit) => (
+                      <option key={unit.value} value={unit.value}>
+                        {unit.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
               </div>
             </div>
 
-            <div className="flex flex-col gap-2">
-              <InfoTooltip label={t.shipMass} description={t.shipMassDesc} />
-              <div className="grid gap-3 md:grid-cols-[1fr_0.6fr]">
-                <input
-                  type="number"
-                  min="1"
-                  step="1"
-                  value={shipMassValue}
-                  onChange={(event) => setShipMassValue(Number(event.target.value))}
-                />
-                <select
-                  value={shipMassUnit}
-                  onChange={(event) => setShipMassUnit(event.target.value)}
-                >
-                  {massUnits.map((unit) => (
-                    <option key={unit.value} value={unit.value}>
-                      {unit.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
+            <div className="flex items-center justify-between rounded-2xl border border-white/10 px-3 py-2 text-xs text-white/70">
+              <span>Cost estimates</span>
+              <button
+                type="button"
+                onClick={() => setShowCosts((prev) => !prev)}
+                className={`rounded-full border px-3 py-1 text-[10px] uppercase tracking-widest ${
+                  showCosts ? "border-star-500 text-star-500" : "border-white/20 text-white/60"
+                }`}
+              >
+                {showCosts ? "On" : "Off"}
+              </button>
             </div>
-
-            <div className="grid gap-4 md:grid-cols-2">
-              <div className="flex flex-col gap-2">
-                <label>{t.shipCostPerKg} (USD)</label>
-                <input
-                  type="number"
-                  min="0"
-                  step="100"
-                  value={shipCostPerKgUsd}
-                  onChange={(event) => setShipCostPerKgUsd(Number(event.target.value))}
-                />
-              </div>
-              <div className="flex flex-col gap-2">
-                <label>{t.fuelCostPerKg} (USD)</label>
-                <input
-                  type="number"
-                  min="0"
-                  step="100"
-                  value={fuelCostPerKgUsd}
-                  onChange={(event) => setFuelCostPerKgUsd(Number(event.target.value))}
-                />
-              </div>
-            </div>
-            <div className="flex flex-col gap-2">
-              <label>{t.currency}</label>
-              <select value={currency} onChange={(event) => setCurrency(event.target.value)}>
-                <option value="USD">USD</option>
-                <option value="EUR">EUR</option>
-                <option value="PLN">PLN</option>
-                <option value="GBP">GBP</option>
-                <option value="JPY">JPY</option>
-              </select>
-            </div>
+            {showCosts ? (
+              <>
+                <div className="grid gap-4 md:grid-cols-2">
+                  <div className="flex flex-col gap-2">
+                    <label>{t.shipCostPerKg} (USD)</label>
+                    <input
+                      type="number"
+                      min="0"
+                      step="100"
+                      value={shipCostPerKgUsd}
+                      onChange={(event) => setShipCostPerKgUsd(Number(event.target.value))}
+                    />
+                  </div>
+                  <div className="flex flex-col gap-2">
+                    <label>{t.fuelCostPerKg} (USD)</label>
+                    <input
+                      type="number"
+                      min="0"
+                      step="100"
+                      value={fuelCostPerKgUsd}
+                      onChange={(event) => setFuelCostPerKgUsd(Number(event.target.value))}
+                    />
+                  </div>
+                </div>
+                <div className="flex flex-col gap-2">
+                  <label>{t.currency}</label>
+                  <select value={currency} onChange={(event) => setCurrency(event.target.value)}>
+                    <option value="USD">USD</option>
+                    <option value="EUR">EUR</option>
+                    <option value="PLN">PLN</option>
+                    <option value="GBP">GBP</option>
+                    <option value="JPY">JPY</option>
+                  </select>
+                </div>
+              </>
+            ) : null}
 
             <div className="flex flex-col gap-2">
               <InfoTooltip label={t.shipPresets} description={t.shipPresetsDesc} />
@@ -884,6 +913,9 @@ export function Calculator() {
                   Estimated boost: {assistBoostKms.toFixed(2)} km/s (simplified model)
                 </p>
               ) : null}
+              {!assistEnabled ? (
+                <p className="mt-2 text-xs text-white/50">Gravity assist disabled.</p>
+              ) : null}
               {!assistAllowed ? (
                 <p className="mt-2 text-xs text-star-400">
                   Gravity assist is only available for solar-system bodies.
@@ -969,72 +1001,99 @@ export function Calculator() {
                     {result.results.energyKwh ?? "n/a"} kWh
                   </p>
                 </div>
-                <div className="grid gap-3 md:grid-cols-3">
-                  <div className="rounded-2xl border border-white/10 p-4">
-                    <p className="text-xs text-white/60">Tsar Bomba</p>
-                    <p className="text-lg font-semibold">
-                      {result.comparisons.tsarBomba ?? "n/a"}x
-                    </p>
-                  </div>
-                  <div className="rounded-2xl border border-white/10 p-4">
-                    <p className="text-xs text-white/60">Global year</p>
-                    <p className="text-lg font-semibold">
-                      {result.comparisons.globalYear ?? "n/a"}x
-                    </p>
-                  </div>
-                  <div className="rounded-2xl border border-white/10 p-4">
-                    <p className="text-xs text-white/60">Sun (1 sec)</p>
-                    <p className="text-lg font-semibold">
-                      {result.comparisons.sunPerSecond ?? "n/a"}x
-                    </p>
-                  </div>
-                </div>
-                <div className="grid gap-3 md:grid-cols-3">
-                  <div className="rounded-2xl border border-white/10 p-4">
-                    <p className="text-xs text-white/60">Ship cost (USD)</p>
-                    <p className="text-lg font-semibold">
-                      {shipCostDisplay.toLocaleString("en-US", {
-                        style: "currency",
-                        currency
-                      })}
-                    </p>
-                    {currency !== "USD" ? (
-                      <p className="text-xs text-white/50">
-                        ${shipCostUsd.toLocaleString("en-US", { maximumFractionDigits: 0 })}
+                  <div className="grid gap-3 md:grid-cols-3">
+                    <div className="rounded-2xl border border-white/10 p-4">
+                      <p className="text-xs text-white/60">Tsar Bomba</p>
+                      <p className="text-lg font-semibold">
+                        {result.comparisons.tsarBomba ?? "n/a"}x
                       </p>
-                    ) : null}
+                    </div>
+                    <div className="rounded-2xl border border-white/10 p-4">
+                      <p className="text-xs text-white/60">Global year</p>
+                      <p className="text-lg font-semibold">
+                        {result.comparisons.globalYear ?? "n/a"}x
+                      </p>
+                    </div>
+                    <div className="rounded-2xl border border-white/10 p-4">
+                      <p className="text-xs text-white/60">Sun (1 sec)</p>
+                      <p className="text-lg font-semibold">
+                        {result.comparisons.sunPerSecond ?? "n/a"}x
+                      </p>
+                    </div>
                   </div>
-                  <div className="rounded-2xl border border-white/10 p-4">
-                    <p className="text-xs text-white/60">Fuel cost ({currency})</p>
-                    <p className="text-lg font-semibold">
-                      {fuelCostDisplay
-                        ? fuelCostDisplay.toLocaleString("en-US", {
+                  <div className="grid gap-3 md:grid-cols-2">
+                    <div className="rounded-2xl border border-white/10 p-4">
+                      <p className="text-xs text-white/60">Hiroshima bomb</p>
+                      <p className="text-lg font-semibold">
+                        {result.comparisons.hiroshima ?? "n/a"}x
+                      </p>
+                    </div>
+                    <div className="rounded-2xl border border-white/10 p-4">
+                      <p className="text-xs text-white/60">LHC beam</p>
+                      <p className="text-lg font-semibold">
+                        {result.comparisons.lhcBeam ?? "n/a"}x
+                      </p>
+                    </div>
+                  </div>
+                  {showCosts ? (
+                    <div className="grid gap-3 md:grid-cols-3">
+                      <div className="rounded-2xl border border-white/10 p-4">
+                        <p className="text-xs text-white/60">Ship cost (USD)</p>
+                        <p
+                          className="text-base font-semibold tabular-nums"
+                          title={shipCostDisplay.toLocaleString("en-US", {
                             style: "currency",
                             currency
-                          })
-                        : "n/a"}
-                    </p>
-                    {currency !== "USD" && fuelCostUsd ? (
-                      <p className="text-xs text-white/50">
-                        ${fuelCostUsd.toLocaleString("en-US", { maximumFractionDigits: 0 })}
-                      </p>
-                    ) : null}
-                  </div>
-                  <div className="rounded-2xl border border-white/10 p-4">
-                    <p className="text-xs text-white/60">Total cost ({currency})</p>
-                    <p className="text-lg font-semibold">
-                      {totalCostDisplay.toLocaleString("en-US", {
-                        style: "currency",
-                        currency
-                      })}
-                    </p>
-                    {currency !== "USD" ? (
-                      <p className="text-xs text-white/50">
-                        ${totalCostUsd.toLocaleString("en-US", { maximumFractionDigits: 0 })}
-                      </p>
-                    ) : null}
-                  </div>
-                </div>
+                          })}
+                        >
+                          {compactFormatter.format(shipCostDisplay)}
+                        </p>
+                        {currency !== "USD" ? (
+                          <p className="text-xs text-white/50 tabular-nums">
+                            ${shipCostUsd.toLocaleString("en-US", { maximumFractionDigits: 0 })}
+                          </p>
+                        ) : null}
+                      </div>
+                      <div className="rounded-2xl border border-white/10 p-4">
+                        <p className="text-xs text-white/60">Fuel cost ({currency})</p>
+                        <p
+                          className="text-base font-semibold tabular-nums"
+                          title={
+                            fuelCostDisplay
+                              ? fuelCostDisplay.toLocaleString("en-US", {
+                                  style: "currency",
+                                  currency
+                                })
+                              : "n/a"
+                          }
+                        >
+                          {fuelCostDisplay ? compactFormatter.format(fuelCostDisplay) : "n/a"}
+                        </p>
+                        {currency !== "USD" && fuelCostUsd ? (
+                          <p className="text-xs text-white/50 tabular-nums">
+                            ${fuelCostUsd.toLocaleString("en-US", { maximumFractionDigits: 0 })}
+                          </p>
+                        ) : null}
+                      </div>
+                      <div className="rounded-2xl border border-white/10 p-4">
+                        <p className="text-xs text-white/60">Total cost ({currency})</p>
+                        <p
+                          className="text-base font-semibold tabular-nums"
+                          title={totalCostDisplay.toLocaleString("en-US", {
+                            style: "currency",
+                            currency
+                          })}
+                        >
+                          {compactFormatter.format(totalCostDisplay)}
+                        </p>
+                        {currency !== "USD" ? (
+                          <p className="text-xs text-white/50 tabular-nums">
+                            ${totalCostUsd.toLocaleString("en-US", { maximumFractionDigits: 0 })}
+                          </p>
+                        ) : null}
+                      </div>
+                    </div>
+                  ) : null}
                 <div className="grid gap-3 md:grid-cols-2">
                   <div className="rounded-2xl border border-white/10 p-4">
                     <InfoTooltip label={t.fuelMass} description={t.fuelMassDesc} />
@@ -1121,7 +1180,15 @@ export function Calculator() {
         <ChartsPanel
           earthTimeYears={earthYears}
           shipTimeYears={shipYears}
-          energyComparisons={result?.comparisons ?? { tsarBomba: null, globalYear: null, sunPerSecond: null }}
+          energyComparisons={
+            result?.comparisons ?? {
+              tsarBomba: null,
+              globalYear: null,
+              sunPerSecond: null,
+              hiroshima: null,
+              lhcBeam: null
+            }
+          }
           labels={{
             chartTimeSplit: t.chartTimeSplit,
             chartTimeSplitDesc: t.chartTimeSplitDesc,

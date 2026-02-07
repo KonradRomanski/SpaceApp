@@ -3,9 +3,9 @@
     "id": "voyager-1",
     "name": "Voyager 1",
     "massKg": 721.9,
-    "maxAccelG": 0.00003,
+    "maxAccelG": 3e-05,
     "org": "NASA",
-    "image": "/ships/probe.svg",
+    "image": "https://commons.wikimedia.org/wiki/Special:FilePath/Voyager%20spacecraft%20(cropped).jpg",
     "note": "Launch mass. Assumed max acceleration.",
     "sources": [
       {
@@ -18,9 +18,9 @@
     "id": "new-horizons",
     "name": "New Horizons",
     "massKg": 478,
-    "maxAccelG": 0.00002,
+    "maxAccelG": 2e-05,
     "org": "NASA",
-    "image": "/ships/probe.svg",
+    "image": "https://commons.wikimedia.org/wiki/Special:FilePath/New_Horizons.jpg",
     "note": "Launch mass. Assumed max acceleration.",
     "sources": [
       {
@@ -33,9 +33,9 @@
     "id": "parker-solar-probe",
     "name": "Parker Solar Probe",
     "massKg": 685,
-    "maxAccelG": 0.00004,
+    "maxAccelG": 4e-05,
     "org": "NASA",
-    "image": "/ships/probe.svg",
+    "image": "https://commons.wikimedia.org/wiki/Special:FilePath/Parker%20Solar%20Probe.jpg",
     "note": "Launch mass. Assumed max acceleration.",
     "sources": [
       {
@@ -50,7 +50,7 @@
     "massKg": 5712,
     "maxAccelG": 0.0002,
     "org": "NASA/ESA",
-    "image": "/ships/probe.svg",
+    "image": "https://commons.wikimedia.org/wiki/Special:FilePath/Cassini%20spacecraft.jpg",
     "note": "Launch mass. Assumed max acceleration.",
     "sources": [
       {
@@ -65,7 +65,7 @@
     "massKg": 6200,
     "maxAccelG": 0.0001,
     "org": "NASA/ESA",
-    "image": "/ships/telescope.svg",
+    "image": "https://commons.wikimedia.org/wiki/Special:FilePath/James_Webb_Space_Telescope.jpg",
     "note": "Launch mass. Assumed max acceleration.",
     "sources": [
       {
@@ -80,7 +80,7 @@
     "massKg": 11110,
     "maxAccelG": 0.0001,
     "org": "NASA/ESA",
-    "image": "/ships/telescope.svg",
+    "image": "https://commons.wikimedia.org/wiki/Special:FilePath/Hubble_01.jpg",
     "note": "Launch mass. Assumed max acceleration.",
     "sources": [
       {
@@ -93,9 +93,9 @@
     "id": "iss",
     "name": "International Space Station",
     "massKg": 420000,
-    "maxAccelG": 0.00001,
+    "maxAccelG": 1e-05,
     "org": "NASA/ESA",
-    "image": "/ships/station.svg",
+    "image": "https://commons.wikimedia.org/wiki/Special:FilePath/International%20Space%20Station.jpg",
     "note": "Total mass in orbit. Assumed max acceleration.",
     "sources": [
       {
@@ -110,7 +110,7 @@
     "massKg": 7700,
     "maxAccelG": 0.002,
     "org": "SpaceX",
-    "image": "/ships/capsule.svg",
+    "image": "https://commons.wikimedia.org/wiki/Special:FilePath/SpaceX_Crew_Dragon.jpg",
     "note": "Dry mass. Assumed max acceleration.",
     "sources": [
       {
@@ -125,7 +125,7 @@
     "massKg": 3900,
     "maxAccelG": 0.5,
     "org": "SpaceX",
-    "image": "/ships/rocket.svg",
+    "image": "https://commons.wikimedia.org/wiki/Special:FilePath/F9%20Second%20Stage%20Separation.jpg",
     "note": "Second-stage empty mass. Assumed max acceleration.",
     "sources": [
       {
@@ -140,7 +140,7 @@
     "massKg": 1420788,
     "maxAccelG": 2.5,
     "org": "SpaceX",
-    "image": "/ships/rocket.svg",
+    "image": "https://commons.wikimedia.org/wiki/Special:FilePath/Falcon%20Heavy%20cropped.jpg",
     "note": "Launch mass. Assumed max acceleration.",
     "sources": [
       {
@@ -155,7 +155,7 @@
     "massKg": 100000,
     "maxAccelG": 2,
     "org": "SpaceX",
-    "image": "/ships/rocket.svg",
+    "image": "https://commons.wikimedia.org/wiki/Special:FilePath/Starship%20SN16.jpeg",
     "note": "Empty mass estimate. Assumed max acceleration.",
     "sources": [
       {

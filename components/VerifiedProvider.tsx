@@ -11,11 +11,14 @@ type VerifiedContextValue = {
 const VerifiedContext = createContext<VerifiedContextValue | null>(null);
 
 export function VerifiedProvider({ children }: { children: React.ReactNode }) {
-  const [verified, setVerified] = useState(false);
+  const [verified, setVerified] = useState(true);
 
   useEffect(() => {
     const raw = localStorage.getItem("cj-verified");
-    if (raw === null) return;
+    if (raw === null) {
+      setVerified(true);
+      return;
+    }
     setVerified(raw === "true");
   }, []);
 

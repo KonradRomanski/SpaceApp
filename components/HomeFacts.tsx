@@ -17,16 +17,30 @@ export function HomeFacts() {
   const [facts, setFacts] = useState<Fact[]>([]);
   const [index, setIndex] = useState(0);
   const [refreshTick, setRefreshTick] = useState(0);
+  const [loading, setLoading] = useState(false);
+  const [loaded, setLoaded] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    setLoading(true);
+    setError(null);
     fetch(`/api/facts?mode=range&page=0&pageSize=8&t=${refreshTick}`, {
       cache: "no-store"
     })
       .then((res) => (res.ok ? res.json() : null))
       .then((data: FactsResponse | null) => {
-        if (!data?.items) return;
+        if (!data?.items) {
+          setFacts([]);
+          setError("No facts available.");
+          return;
+        }
         const sorted = [...data.items].sort((a, b) => b.date.localeCompare(a.date));
         setFacts(sorted);
+      })
+      .catch(() => setError("Failed to load facts."))
+      .finally(() => {
+        setLoading(false);
+        setLoaded(true);
       });
   }, [refreshTick]);
 
@@ -53,7 +67,7 @@ export function HomeFacts() {
             className="rounded-full border border-white/20 px-3 py-1 text-xs"
             onClick={() => setRefreshTick((prev) => prev + 1)}
           >
-            Refresh
+            {loading ? "Loading..." : "Refresh"}
           </button>
           <button
             className="rounded-full border border-white/20 px-3 py-1 text-xs"
@@ -90,8 +104,12 @@ export function HomeFacts() {
             </a>
           </div>
         </div>
-      ) : (
+      ) : loading ? (
         <p className="mt-4 text-sm text-white/60">Loading facts...</p>
+      ) : (
+        <p className="mt-4 text-sm text-white/60">
+          {error ?? (loaded ? "No facts available." : "Loading facts...")}
+        </p>
       )}
 
       {facts.length > 0 ? (

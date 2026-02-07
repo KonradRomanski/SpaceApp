@@ -57,6 +57,8 @@ function buildWikidataQuery(name: string, type?: string) {
     ?eccentricity
     ?periapsis ?periapsisUnitLabel
     ?distanceEarth ?distanceEarthUnitLabel
+    ?constellationLabel
+    ?discovered
     WHERE {
     ?item rdfs:label "${safeName}"@en.
     ${typeClause}
@@ -73,6 +75,8 @@ function buildWikidataQuery(name: string, type?: string) {
     OPTIONAL { ?item wdt:P1096 ?eccentricity. }
     OPTIONAL { ?item p:P2244/psv:P2244 ?periapsisNode. ?periapsisNode wikibase:quantityAmount ?periapsis. ?periapsisNode wikibase:quantityUnit ?periapsisUnit. }
     OPTIONAL { ?item p:P2583/psv:P2583 ?distanceNode. ?distanceNode wikibase:quantityAmount ?distanceEarth. ?distanceNode wikibase:quantityUnit ?distanceEarthUnit. }
+    OPTIONAL { ?item wdt:P59 ?constellation. }
+    OPTIONAL { ?item wdt:P575 ?discovered. }
     SERVICE wikibase:label { bd:serviceParam wikibase:language "en". }
   } LIMIT 1`;
 }
@@ -105,7 +109,9 @@ async function fetchWikidata(name: string, type?: string) {
       albedo: binding.albedo?.value ?? null,
       eccentricity: binding.eccentricity?.value ?? null,
       periapsis: valueWithUnit(binding.periapsis, binding.periapsisUnitLabel),
-      distanceFromEarth: valueWithUnit(binding.distanceEarth, binding.distanceEarthUnitLabel)
+      distanceFromEarth: valueWithUnit(binding.distanceEarth, binding.distanceEarthUnitLabel),
+      constellation: binding.constellationLabel?.value ?? null,
+      discovered: binding.discovered?.value ?? null
     }
   };
 }

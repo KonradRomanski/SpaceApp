@@ -51,6 +51,7 @@ export default function MapPage() {
   const [selectedId, setSelectedId] = useState<string | null>("sun");
   const [mode, setMode] = useState<"3d" | "2d">("3d");
   const [zoom2d, setZoom2d] = useState(1);
+  const [stickToSun, setStickToSun] = useState(false);
   const [fullscreen, setFullscreen] = useState(false);
   const mapRef = useRef<HTMLDivElement | null>(null);
   const [panelTab, setPanelTab] = useState<"info" | "list" | "discoveries">("info");
@@ -76,6 +77,7 @@ export default function MapPage() {
   const [collections, setCollections] = useState<
     { id: string; name: string; createdAt: string; items: Body[] }[]
   >([]);
+  const [moonOrbitKm, setMoonOrbitKm] = useState<Record<string, number>>({});
 
   useEffect(() => {
     fetch("/api/extra-bodies")
@@ -85,6 +87,24 @@ export default function MapPage() {
         setExtraBodies(data.items);
       });
   }, []);
+
+  useEffect(() => {
+    if (!verified) return;
+    const moonNames = baseBodies
+      .filter((body) => body.type === "moon")
+      .map((body) => body.name);
+    if (!moonNames.length) return;
+    fetch("/api/moon-orbits", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ names: moonNames })
+    })
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (!data?.items) return;
+        setMoonOrbitKm(data.items);
+      });
+  }, [verified, baseBodies]);
 
   useEffect(() => {
     const raw = localStorage.getItem("cj-discovery-collections");
@@ -366,6 +386,7 @@ export default function MapPage() {
                 className="glass card h-full overflow-hidden"
                 focusTargetId={selectedId}
                 focusTick={focusTick}
+                moonOrbitKm={moonOrbitKm}
               />
             ) : (
               <Map2D
@@ -378,6 +399,8 @@ export default function MapPage() {
                 onZoomChange={setZoom2d}
                 focusTargetId={selectedId}
                 focusTick={focusTick}
+                stickToSun={stickToSun}
+                moonOrbitKm={moonOrbitKm}
               />
             )}
             {mode === "2d" ? (
@@ -395,6 +418,14 @@ export default function MapPage() {
                 >
                   -
                 </button>
+                <button
+                  className={`rounded-full border px-2 py-1 ${
+                    stickToSun ? "border-star-500 text-star-500" : "border-white/20 text-white/70"
+                  }`}
+                  onClick={() => setStickToSun((prev) => !prev)}
+                >
+                  {stickToSun ? "Stick to Sun: On" : "Stick to Sun: Off"}
+                </button>
               </div>
             ) : null}
             <div className="mt-3 flex items-center gap-3 text-xs text-white/60">
@@ -406,7 +437,7 @@ export default function MapPage() {
               </button>
               <button
                 className={`rounded-full border px-3 py-1 text-xs uppercase tracking-widest ${
-                  focusPathActive ? "border-star-500 text-star-500" : "border-white/20 text-white/70"
+                  focusPathActive ? "border-star-500 bg-star-500/10 text-star-500" : "border-white/20 text-white/70"
                 }`}
                 onClick={() => {
                   setFocusPathIndex(0);
@@ -416,7 +447,9 @@ export default function MapPage() {
                 {focusPathActive ? "Stop focus path" : "Start focus path"}
               </button>
               <button
-                className="rounded-full border border-white/20 px-3 py-1 text-xs uppercase tracking-widest"
+                className={`rounded-full border px-3 py-1 text-xs uppercase tracking-widest ${
+                  fullscreen ? "border-star-500 bg-star-500/10 text-star-500" : "border-white/20 text-white/70"
+                }`}
                 onClick={() => {
                   if (!mapRef.current) return;
                   if (!document.fullscreenElement) {
@@ -647,6 +680,12 @@ export default function MapPage() {
                   {isPresent(info?.facts?.periapsis) ? <span>Periapsis: {info?.facts?.periapsis}</span> : null}
                   {isPresent(info?.facts?.distanceFromEarth) ? (
                     <span>Distance from Earth: {info?.facts?.distanceFromEarth}</span>
+                  ) : null}
+                  {isPresent(info?.facts?.constellation) ? (
+                    <span>Constellation: {info?.facts?.constellation}</span>
+                  ) : null}
+                  {isPresent(info?.facts?.discovered) ? (
+                    <span>Discovered: {info?.facts?.discovered}</span>
                   ) : null}
                   {!info?.facts && !verified ? <span>More data available in Verified mode.</span> : null}
                 </div>

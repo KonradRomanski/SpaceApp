@@ -226,6 +226,18 @@ export default function BodyDetailPage({ params }: { params: { id: string } }) {
                 <p className="text-lg font-semibold">{info?.facts?.distanceFromEarth}</p>
               </div>
             ) : null}
+            {isPresent(info?.facts?.constellation) ? (
+              <div>
+                <p className="text-sm text-white/60">Constellation</p>
+                <p className="text-lg font-semibold">{info?.facts?.constellation}</p>
+              </div>
+            ) : null}
+            {isPresent(info?.facts?.discovered) ? (
+              <div>
+                <p className="text-sm text-white/60">Discovered</p>
+                <p className="text-lg font-semibold">{info?.facts?.discovered}</p>
+              </div>
+            ) : null}
           </div>
         </section>
 

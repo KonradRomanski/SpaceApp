@@ -19,6 +19,8 @@ type ChartsPanelProps = {
     tsarBomba: string | null;
     globalYear: string | null;
     sunPerSecond: string | null;
+    lhcBeam?: string | null;
+    hiroshima?: string | null;
   };
   labels: {
     chartTimeSplit: string;
@@ -43,7 +45,9 @@ export function ChartsPanel({
   const energyData = [
     parseValue(energyComparisons.tsarBomba),
     parseValue(energyComparisons.globalYear),
-    parseValue(energyComparisons.sunPerSecond)
+    parseValue(energyComparisons.sunPerSecond),
+    parseValue(energyComparisons.hiroshima ?? null),
+    parseValue(energyComparisons.lhcBeam ?? null)
   ];
 
   return (
@@ -90,7 +94,7 @@ export function ChartsPanel({
         <div className="mt-4 h-[240px]">
           <Bar
             data={{
-              labels: ["Tsar Bomba", "Global year", "Sun (1s)"],
+              labels: ["Tsar Bomba", "Global year", "Sun (1s)", "Hiroshima", "LHC beam"],
               datasets: [
                 {
                   label: "x",

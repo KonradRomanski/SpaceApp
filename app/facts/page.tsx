@@ -20,19 +20,25 @@ export default function FactsPage() {
   const [facts, setFacts] = useState<Fact[]>([]);
   const [page, setPage] = useState(0);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [tab, setTab] = useState<"apod" | "categories">("apod");
   const [category, setCategory] = useState<"planet" | "mission" | "galaxy">("planet");
   const [topics, setTopics] = useState<Topic[]>([]);
 
   useEffect(() => {
     setLoading(true);
+    setError(null);
     fetch("/api/facts?mode=range&page=0&pageSize=12", { cache: "no-store" })
       .then((res) => (res.ok ? res.json() : null))
       .then((data) => {
-        if (!data?.items) return;
+        if (!data?.items) {
+          setError("No facts available.");
+          return;
+        }
         setFacts(data.items);
         setPage(0);
       })
+      .catch(() => setError("Failed to load facts."))
       .finally(() => setLoading(false));
   }, []);
 
@@ -49,25 +55,35 @@ export default function FactsPage() {
   function loadMore() {
     const next = page + 1;
     setLoading(true);
+    setError(null);
     fetch(`/api/facts?mode=range&page=${next}&pageSize=12`, { cache: "no-store" })
       .then((res) => (res.ok ? res.json() : null))
       .then((data) => {
-        if (!data?.items) return;
+        if (!data?.items) {
+          setError("No more facts available.");
+          return;
+        }
         setFacts((prev) => [...prev, ...data.items]);
         setPage(next);
       })
+      .catch(() => setError("Failed to load facts."))
       .finally(() => setLoading(false));
   }
 
   function refresh() {
     setLoading(true);
+    setError(null);
     fetch(`/api/facts?mode=random&count=12&t=${Date.now()}`, { cache: "no-store" })
       .then((res) => (res.ok ? res.json() : null))
       .then((data) => {
-        if (!data?.items) return;
+        if (!data?.items) {
+          setError("No facts available.");
+          return;
+        }
         setFacts(data.items);
         setPage(0);
       })
+      .catch(() => setError("Failed to load facts."))
       .finally(() => setLoading(false));
   }
 
@@ -168,6 +184,7 @@ export default function FactsPage() {
             ))}
           </div>
         )}
+        {error ? <p className="text-sm text-star-400">{error}</p> : null}
       </div>
     </div>
   );

@@ -26,7 +26,9 @@ const MASS_FACTORS: Record<string, number> = {
 const ENERGY_COMPARISONS = {
   tsarBomba: 2.1e17,
   globalYear: 5.8e20,
-  sunPerSecond: 3.8e26
+  sunPerSecond: 3.8e26,
+  lhcBeam: 3.62e8,
+  hiroshima: 15 * 4.184e12
 };
 
 function formatSci(value: unknown, precision = 4) {
@@ -172,6 +174,12 @@ export async function POST(request: Request) {
           : null,
         sunPerSecond: energyJ
           ? formatFriendly(energyJ / ENERGY_COMPARISONS.sunPerSecond)
+          : null,
+        lhcBeam: energyJ
+          ? formatFriendly(energyJ / ENERGY_COMPARISONS.lhcBeam)
+          : null,
+        hiroshima: energyJ
+          ? formatFriendly(energyJ / ENERGY_COMPARISONS.hiroshima)
           : null
       },
       chart,

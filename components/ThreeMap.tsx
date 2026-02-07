@@ -32,9 +32,18 @@ type ThreeMapProps = {
   className?: string;
   focusTargetId?: string | null;
   focusTick?: number;
+  moonOrbitKm?: Record<string, number>;
 };
 
-export function ThreeMap({ bodies, selectedId, onSelect, className, focusTargetId, focusTick }: ThreeMapProps) {
+export function ThreeMap({
+  bodies,
+  selectedId,
+  onSelect,
+  className,
+  focusTargetId,
+  focusTick,
+  moonOrbitKm
+}: ThreeMapProps) {
   const controlsRef = useRef<any>(null);
   const points = useMemo(() => {
     const solar = bodies.filter(
@@ -70,26 +79,34 @@ export function ThreeMap({ bodies, selectedId, onSelect, className, focusTargetI
       };
     });
 
-      const moonPoints = moons.map((moon) => {
-        const parent =
-          solarPoints.find((planet) => Math.abs((planet.semiMajorAxisAu ?? 0) - (moon.semiMajorAxisAu ?? 0)) < 0.1) ??
-          solarPoints.find((planet) => Math.abs((planet.distanceAuFromEarthAvg ?? 0) - (moon.distanceAuFromEarthAvg ?? 0)) < 0.2) ??
-          solarPoints[0];
-        const base = parent?.position ?? new THREE.Vector3(0, 0, 0);
-        const angle = (hashString(moon.id) % 360) * (Math.PI / 180);
-        const orbit = 1.6 + (hashString(moon.name) % 6) * 0.25;
-        return {
-          ...moon,
-          position: new THREE.Vector3(
-            base.x + Math.cos(angle) * orbit,
-            base.y + Math.sin(angle) * orbit,
-            base.z + Math.sin(angle * 0.6) * 0.2
-          ),
-          parentId: parent?.id,
-          orbitRadius: orbit,
-          group: "moon"
-        };
-      });
+    const moonPoints = moons.map((moon) => {
+      const parent =
+        solarPoints.find((planet) => Math.abs((planet.semiMajorAxisAu ?? 0) - (moon.semiMajorAxisAu ?? 0)) < 0.1) ??
+        solarPoints.find((planet) => Math.abs((planet.distanceAuFromEarthAvg ?? 0) - (moon.distanceAuFromEarthAvg ?? 0)) < 0.2) ??
+        solarPoints[0];
+      const base = parent?.position ?? new THREE.Vector3(0, 0, 0);
+      const baseAngle = (hashString(moon.id) % 360) * (Math.PI / 180);
+      const orbitKm = moonOrbitKm?.[moon.name];
+      const orbit = orbitKm
+        ? Math.min(6, Math.max(0.9, orbitKm / 200000))
+        : 1.6 + (hashString(moon.name) % 6) * 0.25;
+      const speed = orbitKm ? 0.35 / Math.max(1, orbit) : 0.2 / Math.max(1, orbit);
+      const angle = baseAngle;
+      return {
+        ...moon,
+        position: new THREE.Vector3(
+          base.x + Math.cos(angle) * orbit,
+          base.y + Math.sin(angle) * orbit,
+          base.z + Math.sin(angle * 0.6) * 0.2
+        ),
+        parentId: parent?.id,
+        orbitRadius: orbit,
+        center: base,
+        baseAngle,
+        speed,
+        group: "moon"
+      };
+    });
 
     return {
       solar: solarPoints,
@@ -142,7 +159,7 @@ export function ThreeMap({ bodies, selectedId, onSelect, className, focusTargetI
           }
         : null
     };
-  }, [bodies]);
+  }, [bodies, moonOrbitKm]);
 
   useEffect(() => {
     if (!controlsRef.current || !focusTargetId || !focusTick) return;
@@ -217,7 +234,7 @@ export function ThreeMap({ bodies, selectedId, onSelect, className, focusTargetI
         ))}
 
         {points.moons.map((body) => (
-          <BodyMarker
+          <MoonMarker
             key={body.id}
             body={body}
             isSelected={body.id === selectedId}
@@ -328,6 +345,71 @@ function BodyMarker({
       <mesh ref={ringRef}>
         <torusGeometry args={[1.2, 0.08, 16, 48]} />
         <meshStandardMaterial color="#FFFFFF" emissive="#00BFFF" emissiveIntensity={0.6} />
+      </mesh>
+      <Html distanceFactor={6}>
+        <button
+          className={`flex items-center gap-2 rounded-full border px-3 py-1 text-xs ${
+            isSelected
+              ? "border-star-500 bg-star-500/20 text-white"
+              : "border-white/20 bg-space-800/70 text-white/80"
+          }`}
+          onClick={() => onSelect(body)}
+        >
+          <img src={icon} alt="icon" className="h-4 w-4" />
+          {body.name}
+        </button>
+      </Html>
+    </group>
+  );
+}
+
+function MoonMarker({
+  body,
+  isSelected,
+  onSelect,
+  size = 0.7
+}: {
+  body: Body & {
+    position: THREE.Vector3;
+    center: THREE.Vector3;
+    baseAngle: number;
+    speed: number;
+    orbitRadius: number;
+  };
+  isSelected: boolean;
+  onSelect: (body: Body) => void;
+  size?: number;
+}) {
+  const icon = getBodyIcon(body);
+  const color = "#9FB7FF";
+  const ringRef = useRef<THREE.Mesh>(null);
+  const groupRef = useRef<THREE.Group>(null);
+
+  useFrame(({ clock }) => {
+    if (!ringRef.current || !groupRef.current) return;
+    const angle = body.baseAngle + clock.elapsedTime * body.speed;
+    const x = body.center.x + Math.cos(angle) * body.orbitRadius;
+    const y = body.center.y + Math.sin(angle) * body.orbitRadius;
+    const z = body.center.z + Math.sin(angle * 0.6) * 0.2;
+    groupRef.current.position.set(x, y, z);
+    const scale = isSelected ? 1 + Math.sin(clock.elapsedTime * 2) * 0.08 : 1;
+    ringRef.current.scale.set(scale, scale, scale);
+    ringRef.current.visible = isSelected;
+  });
+
+  return (
+    <group ref={groupRef} position={body.position}>
+      <mesh onClick={() => onSelect(body)}>
+        <sphereGeometry args={[size, 22, 22]} />
+        <meshStandardMaterial color={color} emissive={color} emissiveIntensity={isSelected ? 0.8 : 0.4} />
+      </mesh>
+      <mesh onClick={() => onSelect(body)}>
+        <sphereGeometry args={[2.2, 12, 12]} />
+        <meshBasicMaterial transparent opacity={0} />
+      </mesh>
+      <mesh ref={ringRef}>
+        <torusGeometry args={[1.2, 0.08, 16, 48]} />
+        <meshStandardMaterial color="#FFFFFF" emissive={color} emissiveIntensity={0.6} />
       </mesh>
       <Html distanceFactor={6}>
         <button

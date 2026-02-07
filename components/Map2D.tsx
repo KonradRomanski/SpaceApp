@@ -31,6 +31,8 @@ type Map2DProps = {
   onZoomChange: (value: number) => void;
   focusTargetId?: string | null;
   focusTick?: number;
+  stickToSun?: boolean;
+  moonOrbitKm?: Record<string, number>;
 };
 
 export function Map2D({
@@ -41,9 +43,12 @@ export function Map2D({
   zoom,
   onZoomChange,
   focusTargetId,
-  focusTick
+  focusTick,
+  stickToSun,
+  moonOrbitKm
 }: Map2DProps) {
   const [focusId, setFocusId] = useState<string | null>(null);
+  const [phase, setPhase] = useState(0);
   const points = useMemo(() => {
     const solar = bodies.filter(
       (b) => b.semiMajorAxisAu !== undefined && (b.type === "planet" || b.type === "dwarf-planet")
@@ -74,8 +79,13 @@ export function Map2D({
         solarPoints[0];
       const baseX = parent?.x ?? 260;
       const baseY = parent?.y ?? 260;
-      const angle = (hashString(moon.id) % 360) * (Math.PI / 180);
-      const orbit = 18 + (hashString(moon.name) % 6) * 5;
+      const baseAngle = (hashString(moon.id) % 360) * (Math.PI / 180);
+      const orbitKm = moonOrbitKm?.[moon.name];
+      const orbit = orbitKm
+        ? Math.min(90, Math.max(12, orbitKm / 80000))
+        : 18 + (hashString(moon.name) % 6) * 5;
+      const speed = orbitKm ? 0.25 / Math.max(1, orbit) : 0.12 / Math.max(1, orbit);
+      const angle = baseAngle + phase * speed;
       return {
         ...moon,
         x: baseX + Math.cos(angle) * orbit,
@@ -122,21 +132,29 @@ export function Map2D({
           }
         : null
     };
-  }, [bodies]);
+  }, [bodies, moonOrbitKm, phase]);
 
   useEffect(() => {
     if (!focusTargetId || !focusTick) return;
     setFocusId(focusTargetId);
   }, [focusTargetId, focusTick]);
 
-  const focusPoint =
-    (focusId ? points.solar.find((b) => b.id === focusId) : null) ||
-    (focusId ? points.moons.find((b) => b.id === focusId) : null) ||
-    (focusId ? points.stars.find((b) => b.id === focusId) : null) ||
-    (focusId ? points.galaxies.find((b) => b.id === focusId) : null) ||
-    (focusId ? points.catalog.find((b) => b.id === focusId) : null) ||
-    (focusId && points.sun && points.sun.id === focusId ? points.sun : null) ||
-    null;
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setPhase((prev) => prev + 0.012);
+    }, 60);
+    return () => clearInterval(timer);
+  }, []);
+
+  const focusPoint = stickToSun
+    ? points.sun
+    : (focusId ? points.solar.find((b) => b.id === focusId) : null) ||
+      (focusId ? points.moons.find((b) => b.id === focusId) : null) ||
+      (focusId ? points.stars.find((b) => b.id === focusId) : null) ||
+      (focusId ? points.galaxies.find((b) => b.id === focusId) : null) ||
+      (focusId ? points.catalog.find((b) => b.id === focusId) : null) ||
+      (focusId && points.sun && points.sun.id === focusId ? points.sun : null) ||
+      null;
   const baseSize = 840;
   const viewSize = baseSize / Math.max(0.6, Math.min(zoom, 3));
   const centerX = focusPoint ? focusPoint.x : 420;

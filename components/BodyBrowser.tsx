@@ -233,6 +233,12 @@ export function BodyBrowser({
                 {isPresent(active?.facts?.distanceFromEarth) ? (
                   <span>Distance from Earth: {active?.facts?.distanceFromEarth}</span>
                 ) : null}
+                {isPresent(active?.facts?.constellation) ? (
+                  <span>Constellation: {active?.facts?.constellation}</span>
+                ) : null}
+                {isPresent(active?.facts?.discovered) ? (
+                  <span>Discovered: {active?.facts?.discovered}</span>
+                ) : null}
                 {!active?.facts && !verified ? (
                   <span>More data available in Verified mode.</span>
                 ) : null}
