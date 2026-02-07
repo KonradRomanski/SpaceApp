@@ -521,136 +521,146 @@ export function Calculator() {
             className="glass card flex flex-col gap-6 bg-cosmic-radial"
           >
 
-            <div className="flex flex-col gap-2">
-              <InfoTooltip label={t.distanceMode} description={t.distanceModeDesc} />
-              <select
-                value={distanceMode}
-                onChange={(event) => setDistanceMode(event.target.value)}
-              >
-                {distanceModes.map((mode) => (
-                  <option key={mode.value} value={mode.value}>
-                    {t[mode.labelKey]}
-                  </option>
-                ))}
-              </select>
-              {distanceWarning ? (
-                <p className="text-xs text-star-400">{distanceWarning}</p>
-              ) : null}
-              {distanceMode === "ephemeris" ? (
-                <div className="grid gap-3 rounded-2xl border border-white/10 p-3 text-xs text-white/70 md:grid-cols-[1fr_auto]">
-                  <div className="flex flex-col gap-2">
-                    <label>Start date (UTC)</label>
-                    <input
-                      type="date"
-                      value={ephemerisDate}
-                      onChange={(event) => setEphemerisDate(event.target.value)}
-                    />
-                    <div className="grid gap-2 md:grid-cols-2">
-                      <div className="flex flex-col gap-2">
-                        <label>Window days</label>
-                        <input
-                          type="number"
-                          min="10"
-                          step="10"
-                          value={windowDays}
-                          onChange={(event) => setWindowDays(Number(event.target.value))}
-                        />
-                      </div>
-                      <div className="flex flex-col gap-2">
-                        <label>Step (days)</label>
-                        <input
-                          type="number"
-                          min="1"
-                          step="1"
-                          value={windowStepDays}
-                          onChange={(event) => setWindowStepDays(Number(event.target.value))}
-                        />
-                      </div>
-                    </div>
-                  </div>
-                  <div className="flex flex-col justify-end gap-2">
-                    <button
-                      type="button"
-                      onClick={fetchEphemeris}
-                      className="rounded-full border border-star-500 px-3 py-2 text-xs uppercase tracking-widest text-star-500"
-                    >
-                      {ephemerisLoading ? "Fetching..." : "Fetch ephemeris"}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={fetchWindow}
-                      className="rounded-full border border-white/20 px-3 py-2 text-xs uppercase tracking-widest text-white/70"
-                    >
-                      Find window
-                    </button>
-                    {ephemerisDistance !== null ? (
-                      <p className="text-xs text-white/60">
-                        Distance: {ephemerisDistance.toFixed(3)} AU
-                      </p>
-                    ) : null}
-                    {windowResult ? (
-                      <p className="text-xs text-white/60">
-                        Best window: {windowResult.date} · {windowResult.distanceAu.toFixed(3)} AU
-                      </p>
-                    ) : null}
-                    {ephemerisError ? (
-                      <p className="text-xs text-star-400">{ephemerisError}</p>
-                    ) : null}
-                  </div>
-                </div>
-              ) : null}
-            </div>
-
-            <div className="grid gap-4 md:grid-cols-3">
-              <div className="flex min-w-0 flex-col gap-2">
-                <InfoTooltip label={t.distance} description={t.distanceDesc} />
-                <div className="flex items-center gap-2">
-                  <input
-                    type="number"
-                    min="0"
-                    step="any"
-                    value={distanceValue}
-                    className="w-full min-w-0"
-                    onChange={(event) => setDistanceValue(Number(event.target.value))}
-                  />
-                  <select
-                    value={distanceUnit}
-                    className="w-28"
-                    onChange={(event) => setDistanceUnit(event.target.value)}
+            <div className="grid gap-4 md:grid-cols-[1.2fr_0.8fr]">
+              <div className="flex flex-col gap-2">
+                <InfoTooltip label={t.distanceMode} description={t.distanceModeDesc} />
+                <select
+                  value={distanceMode}
+                  onChange={(event) => setDistanceMode(event.target.value)}
+                >
+                  {distanceModes.map((mode) => (
+                    <option key={mode.value} value={mode.value}>
+                      {t[mode.labelKey]}
+                    </option>
+                  ))}
+                </select>
+                {distanceWarning ? (
+                  <p className="text-xs text-star-400">{distanceWarning}</p>
+                ) : null}
+              </div>
+              <div className="flex items-start">
+                <div className="inline-flex w-fit items-center justify-between gap-3 rounded-full border border-white/10 px-3 py-2 text-xs text-white/70 self-start">
+                  <span>Cost estimates</span>
+                  <button
+                    type="button"
+                    onClick={() => setShowCosts((prev) => !prev)}
+                    className={`rounded-full border px-3 py-1 text-[10px] uppercase tracking-widest ${
+                      showCosts ? "border-star-500 text-star-500" : "border-white/20 text-white/60"
+                    }`}
                   >
-                    {distanceUnits.map((unit) => (
-                      <option key={unit.value} value={unit.value}>
-                        {unit.label}
-                      </option>
-                    ))}
-                  </select>
+                    {showCosts ? "On" : "Off"}
+                  </button>
                 </div>
               </div>
-              <div className="flex min-w-0 flex-col gap-2">
-                <InfoTooltip label={t.acceleration} description={t.accelerationDesc} />
-                <div className="flex items-center gap-2">
+            </div>
+            {distanceMode === "ephemeris" ? (
+              <div className="grid gap-3 rounded-2xl border border-white/10 p-3 text-xs text-white/70 md:grid-cols-[1fr_auto]">
+                <div className="flex flex-col gap-2">
+                  <label>Start date (UTC)</label>
                   <input
-                    type="number"
-                    min="0.1"
-                    step="0.1"
-                    value={accelerationValue}
-                    className="w-full min-w-0"
-                    onChange={(event) =>
-                      setAccelerationValue(Number(event.target.value))
-                    }
+                    type="date"
+                    value={ephemerisDate}
+                    onChange={(event) => setEphemerisDate(event.target.value)}
                   />
-                  <select
-                    value={accelerationUnit}
-                    className="w-28"
-                    onChange={(event) => setAccelerationUnit(event.target.value)}
-                  >
-                    {accelerationUnits.map((unit) => (
-                      <option key={unit.value} value={unit.value}>
-                        {unit.label}
-                      </option>
-                    ))}
-                  </select>
+                  <div className="grid gap-2 md:grid-cols-2">
+                    <div className="flex flex-col gap-2">
+                      <label>Window days</label>
+                      <input
+                        type="number"
+                        min="10"
+                        step="10"
+                        value={windowDays}
+                        onChange={(event) => setWindowDays(Number(event.target.value))}
+                      />
+                    </div>
+                    <div className="flex flex-col gap-2">
+                      <label>Step (days)</label>
+                      <input
+                        type="number"
+                        min="1"
+                        step="1"
+                        value={windowStepDays}
+                        onChange={(event) => setWindowStepDays(Number(event.target.value))}
+                      />
+                    </div>
+                  </div>
                 </div>
+                <div className="flex flex-col justify-end gap-2">
+                  <button
+                    type="button"
+                    onClick={fetchEphemeris}
+                    className="rounded-full border border-star-500 px-3 py-2 text-xs uppercase tracking-widest text-star-500"
+                  >
+                    {ephemerisLoading ? "Fetching..." : "Fetch ephemeris"}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={fetchWindow}
+                    className="rounded-full border border-white/20 px-3 py-2 text-xs uppercase tracking-widest text-white/70"
+                  >
+                    Find window
+                  </button>
+                  {ephemerisDistance !== null ? (
+                    <p className="text-xs text-white/60">
+                      Distance: {ephemerisDistance.toFixed(3)} AU
+                    </p>
+                  ) : null}
+                  {windowResult ? (
+                    <p className="text-xs text-white/60">
+                      Best window: {windowResult.date} · {windowResult.distanceAu.toFixed(3)} AU
+                    </p>
+                  ) : null}
+                  {ephemerisError ? (
+                    <p className="text-xs text-star-400">{ephemerisError}</p>
+                  ) : null}
+                </div>
+              </div>
+            ) : null}
+
+            <div className="grid gap-4 md:grid-cols-3">
+              <div className="flex flex-col gap-2">
+                <InfoTooltip label={t.distance} description={t.distanceDesc} />
+                <input
+                  type="number"
+                  min="0"
+                  step="any"
+                  value={distanceValue}
+                  className="min-w-[140px]"
+                  onChange={(event) => setDistanceValue(Number(event.target.value))}
+                />
+                <select
+                  value={distanceUnit}
+                  onChange={(event) => setDistanceUnit(event.target.value)}
+                >
+                  {distanceUnits.map((unit) => (
+                    <option key={unit.value} value={unit.value}>
+                      {unit.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="flex flex-col gap-2">
+                <InfoTooltip label={t.acceleration} description={t.accelerationDesc} />
+                <input
+                  type="number"
+                  min="0.1"
+                  step="0.1"
+                  value={accelerationValue}
+                  className="min-w-[140px]"
+                  onChange={(event) =>
+                    setAccelerationValue(Number(event.target.value))
+                  }
+                />
+                <select
+                  value={accelerationUnit}
+                  onChange={(event) => setAccelerationUnit(event.target.value)}
+                >
+                  {accelerationUnits.map((unit) => (
+                    <option key={unit.value} value={unit.value}>
+                      {unit.label}
+                    </option>
+                  ))}
+                </select>
                 {accelerationUnit === "g" && accelerationValue > 1.5 ? (
                   <p className="text-xs text-star-400">
                     Sustained acceleration above 1.5 g is likely unsafe for humans.
@@ -660,44 +670,29 @@ export function Calculator() {
                   <p className="text-xs text-star-400">{accelWarning}</p>
                 ) : null}
               </div>
-              <div className="flex min-w-0 flex-col gap-2">
+              <div className="flex flex-col gap-2">
                 <InfoTooltip label={t.shipMass} description={t.shipMassDesc} />
-                <div className="flex items-center gap-2">
-                  <input
-                    type="number"
-                    min="1"
-                    step="1"
-                    value={shipMassValue}
-                    className="w-full min-w-0"
-                    onChange={(event) => setShipMassValue(Number(event.target.value))}
-                  />
-                  <select
-                    value={shipMassUnit}
-                    className="w-28"
-                    onChange={(event) => setShipMassUnit(event.target.value)}
-                  >
-                    {massUnits.map((unit) => (
-                      <option key={unit.value} value={unit.value}>
-                        {unit.label}
-                      </option>
-                    ))}
-                  </select>
-                </div>
+                <input
+                  type="number"
+                  min="1"
+                  step="1"
+                  value={shipMassValue}
+                  className="min-w-[140px]"
+                  onChange={(event) => setShipMassValue(Number(event.target.value))}
+                />
+                <select
+                  value={shipMassUnit}
+                  onChange={(event) => setShipMassUnit(event.target.value)}
+                >
+                  {massUnits.map((unit) => (
+                    <option key={unit.value} value={unit.value}>
+                      {unit.label}
+                    </option>
+                  ))}
+                </select>
               </div>
             </div>
 
-            <div className="inline-flex items-center justify-between gap-3 rounded-full border border-white/10 px-3 py-2 text-xs text-white/70 self-start">
-              <span>Cost estimates</span>
-              <button
-                type="button"
-                onClick={() => setShowCosts((prev) => !prev)}
-                className={`rounded-full border px-3 py-1 text-[10px] uppercase tracking-widest ${
-                  showCosts ? "border-star-500 text-star-500" : "border-white/20 text-white/60"
-                }`}
-              >
-                {showCosts ? "On" : "Off"}
-              </button>
-            </div>
             {showCosts ? (
               <>
                 <div className="grid gap-4 md:grid-cols-2">

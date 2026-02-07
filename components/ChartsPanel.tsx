@@ -46,8 +46,7 @@ export function ChartsPanel({
     parseValue(energyComparisons.tsarBomba),
     parseValue(energyComparisons.globalYear),
     parseValue(energyComparisons.sunPerSecond),
-    parseValue(energyComparisons.hiroshima ?? null),
-    parseValue(energyComparisons.lhcBeam ?? null)
+    parseValue(energyComparisons.hiroshima ?? null)
   ];
 
   return (
@@ -94,7 +93,7 @@ export function ChartsPanel({
         <div className="mt-4 h-[260px]">
           <Bar
             data={{
-              labels: ["Tsar Bomba", "Global year", "Sun (1s)", "Hiroshima", "LHC beam"],
+              labels: ["Tsar Bomba", "Global year", "Sun (1s)", "Hiroshima"],
               datasets: [
                 {
                   label: "x",
@@ -103,8 +102,7 @@ export function ChartsPanel({
                     "rgba(255,215,0,0.6)",
                     "rgba(0,191,255,0.6)",
                     "rgba(255,255,255,0.6)",
-                    "rgba(255,99,132,0.6)",
-                    "rgba(155,89,182,0.6)"
+                    "rgba(255,99,132,0.6)"
                   ]
                 }
               ]

@@ -38,9 +38,12 @@ export async function GET(request: Request) {
   try {
     const response = await fetch(url, { next: { revalidate: 21600 } });
     if (!response.ok) {
-      return NextResponse.json({ items: [] });
+      return NextResponse.json({ items: fallbackFacts });
     }
     const json = await response.json();
+    if ((json as any)?.error) {
+      return NextResponse.json({ items: fallbackFacts });
+    }
     const items = (Array.isArray(json) ? json : [json])
       .filter((item) => item)
       .map((item) => ({

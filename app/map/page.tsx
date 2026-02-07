@@ -143,6 +143,10 @@ export default function MapPage() {
     return true;
   });
 
+  const selected = selectedId
+    ? allBodies.find((body) => body.id === selectedId) ?? null
+    : null;
+
   const activeBodies = useMemo(() => {
     if (!moonFocus || !selected) return viewFiltered;
     if (selected.type !== "planet" && selected.type !== "dwarf-planet") return viewFiltered;
@@ -158,10 +162,6 @@ export default function MapPage() {
       return semiMatch || distMatch;
     });
   }, [moonFocus, selected, viewFiltered]);
-
-  const selected = selectedId
-    ? allBodies.find((body) => body.id === selectedId) ?? null
-    : null;
 
   useEffect(() => {
     if (!selected || (selected.type !== "planet" && selected.type !== "dwarf-planet")) {
