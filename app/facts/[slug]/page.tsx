@@ -46,9 +46,13 @@ export default function FactDetailPage({ params }: { params: { slug: string } })
         {fact.image ? (
           <img src={fact.image} alt={fact.title} className="h-72 w-full rounded-3xl object-cover" />
         ) : null}
-        <p className="text-lg leading-relaxed text-white/70 whitespace-pre-line">
-          {fact.description}
-        </p>
+        {fact.description ? (
+          <p className="text-lg leading-relaxed text-white/70 whitespace-pre-line">
+            {fact.description}
+          </p>
+        ) : (
+          <p className="text-sm text-star-400">No description available for this entry.</p>
+        )}
         <div className="flex flex-wrap items-center gap-3 text-xs text-white/50">
           <span>Source: NASA APOD</span>
           <a

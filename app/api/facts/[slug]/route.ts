@@ -22,12 +22,16 @@ export async function GET(_request: Request, { params }: { params: { slug: strin
       const fallback = (fallbackFacts as any[]).find((item) => item.date === date);
       return NextResponse.json(fallback ?? null);
     }
+    const fallback = (fallbackFacts as any[]).find((item) => item.date === date) ?? null;
     return NextResponse.json({
-      date: json.date,
-      title: json.title,
-      description: json.explanation,
-      mediaType: json.media_type,
-      image: json.media_type === "image" ? json.url : json.thumbnail_url ?? null
+      date: json.date ?? fallback?.date ?? date,
+      title: json.title ?? fallback?.title ?? "Astronomy Picture of the Day",
+      description: json.explanation ?? fallback?.description ?? null,
+      mediaType: json.media_type ?? "image",
+      image:
+        json.media_type === "image"
+          ? json.url
+          : json.thumbnail_url ?? fallback?.image ?? null
     });
   } catch {
     const fallback = (fallbackFacts as any[]).find((item) => item.date === date);
