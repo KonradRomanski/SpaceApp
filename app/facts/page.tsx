@@ -73,7 +73,7 @@ export default function FactsPage() {
   function refresh() {
     setLoading(true);
     setError(null);
-    fetch(`/api/facts?mode=random&count=12&t=${Date.now()}`, { cache: "no-store" })
+    fetch(`/api/facts?mode=range&page=0&pageSize=12&t=${Date.now()}`, { cache: "no-store" })
       .then((res) => (res.ok ? res.json() : null))
       .then((data) => {
         if (!data?.items) {

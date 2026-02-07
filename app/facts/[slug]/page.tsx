@@ -46,8 +46,20 @@ export default function FactDetailPage({ params }: { params: { slug: string } })
         {fact.image ? (
           <img src={fact.image} alt={fact.title} className="h-72 w-full rounded-3xl object-cover" />
         ) : null}
-        <p className="text-lg text-white/70">{fact.description}</p>
-        <p className="text-xs text-white/50">Source: NASA APOD</p>
+        <p className="text-lg leading-relaxed text-white/70 whitespace-pre-line">
+          {fact.description}
+        </p>
+        <div className="flex flex-wrap items-center gap-3 text-xs text-white/50">
+          <span>Source: NASA APOD</span>
+          <a
+            href={`https://apod.nasa.gov/apod/ap${fact.date.replace(/-/g, "").slice(2)}.html`}
+            target="_blank"
+            rel="noreferrer"
+            className="text-star-500"
+          >
+            View on NASA
+          </a>
+        </div>
       </div>
     </div>
   );
