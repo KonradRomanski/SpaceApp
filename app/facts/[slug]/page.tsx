@@ -13,12 +13,16 @@ type Fact = {
 
 export default function FactDetailPage({ params }: { params: { slug: string } }) {
   const [fact, setFact] = useState<Fact | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     fetch(`/api/facts/${params.slug}`)
       .then((res) => (res.ok ? res.json() : null))
       .then((data) => {
-        if (!data?.title) return;
+        if (!data?.title) {
+          setError("Fact not available.");
+          return;
+        }
         setFact(data);
       });
   }, [params.slug]);
@@ -26,7 +30,7 @@ export default function FactDetailPage({ params }: { params: { slug: string } })
   if (!fact) {
     return (
       <div className="min-h-screen px-6 py-16 md:px-16">
-        <p className="text-white/70">Loading...</p>
+        <p className="text-white/70">{error ?? "Loading..."}</p>
       </div>
     );
   }

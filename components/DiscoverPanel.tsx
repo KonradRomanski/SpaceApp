@@ -56,8 +56,15 @@ export function DiscoverPanel({ onAdd, existing = [] }: DiscoverPanelProps) {
           (item: DiscoverItem) =>
             !existingIds.has(item.id) && !existingNames.has(normalize(item.name))
         );
-        setItems(filtered);
-        setSelected(filtered[0] ?? null);
+        const seen = new Set<string>();
+        const deduped = filtered.filter((item: DiscoverItem) => {
+          const key = `${item.id}-${normalize(item.name)}`;
+          if (seen.has(key)) return false;
+          seen.add(key);
+          return true;
+        });
+        setItems(deduped);
+        setSelected(deduped[0] ?? null);
       })
       .finally(() => setLoading(false));
   }

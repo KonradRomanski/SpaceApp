@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { create, all, MathJsStatic } from "mathjs";
 import { formatDuration } from "../../../lib/format";
+import { computeTimes, solveAcceleration } from "../../../lib/relativity";
 
 const math = create(all, { number: "BigNumber", precision: 64 }) as MathJsStatic;
 
@@ -22,6 +23,12 @@ const MASS_FACTORS: Record<string, number> = {
   kg: 1,
   t: 1000,
   lb: 0.45359237
+};
+
+const TIME_FACTORS: Record<string, number> = {
+  hours: 3600,
+  days: 86400,
+  years: 31557600
 };
 
 const ENERGY_COMPARISONS = {
@@ -85,6 +92,10 @@ export async function POST(request: Request) {
     const shipMassValue = Number(body.shipMassValue);
     const shipMassUnit = String(body.shipMassUnit || "kg");
     const propulsionEfficiency = Number(body.propulsionEfficiency ?? 1);
+    const solveMode = String(body.solveMode ?? "distance");
+    const targetTimeValue = Number(body.targetTimeValue ?? 0);
+    const targetTimeUnit = String(body.targetTimeUnit ?? "hours");
+    const targetTimeFrame = String(body.targetTimeFrame ?? "earth") as "earth" | "ship";
 
     if (!Number.isFinite(distanceValue) || distanceValue < 0) {
       return NextResponse.json({ error: "Invalid distance" }, { status: 400 });
@@ -97,9 +108,23 @@ export async function POST(request: Request) {
     }
 
     const distanceMeters = distanceValue * (DISTANCE_FACTORS[distanceUnit] ?? 1);
-    const accelerationMs2 =
+    let accelerationMs2 =
       accelerationValue * (ACC_FACTORS[accelerationUnit] ?? 1);
     const shipMassKg = shipMassValue * (MASS_FACTORS[shipMassUnit] ?? 1);
+
+    let derivedAccelerationMs2: number | null = null;
+    if (solveMode === "time" && targetTimeValue > 0) {
+      const seconds = targetTimeValue * (TIME_FACTORS[targetTimeUnit] ?? 3600);
+      const solved = solveAcceleration(distanceMeters, seconds, targetTimeFrame);
+      if (!solved) {
+        return NextResponse.json(
+          { error: "Unable to solve acceleration for the target time." },
+          { status: 400 }
+        );
+      }
+      derivedAccelerationMs2 = solved;
+      accelerationMs2 = solved;
+    }
 
     const { phi, tau, T, vmax, energy } = compute(
       distanceMeters,
@@ -136,7 +161,8 @@ export async function POST(request: Request) {
       inputs: {
         distanceMeters: formatFriendly(distanceMeters),
         accelerationMs2,
-        shipMassKg
+        shipMassKg,
+        derivedAccelerationMs2
       },
       results: {
         rapidity: formatFriendly(phi),
@@ -150,7 +176,10 @@ export async function POST(request: Request) {
         earthTimeHuman: formatDuration(earthSeconds),
         vmaxFractionC: vmaxMs ? (vmaxMs / 299792458).toFixed(4) : null,
         fuelMassKg: fuelMassKg ? formatFriendly(fuelMassKg) : null,
-        fuelRatio: fuelRatio ? fuelRatio.toFixed(3) : null
+        fuelRatio: fuelRatio ? fuelRatio.toFixed(3) : null,
+        derivedAccelerationG: derivedAccelerationMs2
+          ? (derivedAccelerationMs2 / 9.80665).toFixed(3)
+          : null
       },
       comparisons: {
         tsarBomba: energyJ

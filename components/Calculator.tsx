@@ -28,6 +28,7 @@ type CalculationResponse = {
     distanceMeters: string;
     accelerationMs2: number;
     shipMassKg: number;
+    derivedAccelerationMs2?: number | null;
   };
   results: {
     rapidity: string;
@@ -42,6 +43,7 @@ type CalculationResponse = {
     vmaxFractionC: string | null;
     fuelMassKg: string | null;
     fuelRatio: string | null;
+    derivedAccelerationG?: string | null;
   };
   comparisons: {
     tsarBomba: string | null;
@@ -111,6 +113,10 @@ export function Calculator() {
     "proxima-centauri"
   );
   const [distanceMode, setDistanceMode] = useState("straight");
+  const [solveMode, setSolveMode] = useState<"distance" | "time">("distance");
+  const [targetTimeValue, setTargetTimeValue] = useState(24);
+  const [targetTimeUnit, setTargetTimeUnit] = useState<"hours" | "days" | "years">("hours");
+  const [targetTimeFrame, setTargetTimeFrame] = useState<"earth" | "ship">("earth");
   const [propulsionEfficiency, setPropulsionEfficiency] = useState(1);
   const [result, setResult] = useState<CalculationResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -317,7 +323,11 @@ export function Calculator() {
           shipMassValue,
           shipMassUnit,
           propulsionEfficiency,
-          distanceRange: range
+          distanceRange: range,
+          solveMode,
+          targetTimeValue,
+          targetTimeUnit,
+          targetTimeFrame
         })
       });
 
@@ -328,6 +338,10 @@ export function Calculator() {
 
       const data = (await response.json()) as CalculationResponse;
       setResult(data);
+      if (solveMode === "time" && data.inputs.derivedAccelerationMs2) {
+        setAccelerationUnit("g");
+        setAccelerationValue(Number((data.inputs.derivedAccelerationMs2 / 9.80665).toFixed(3)));
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Calculation failed");
     } finally {
@@ -366,6 +380,10 @@ export function Calculator() {
     const assistAngleParam = parseNumber(params.get("assistAngle"));
     const assistModeParam = params.get("assistMode");
     const assistSeqParam = params.get("assistSeq");
+    const solveParam = params.get("solve");
+    const timeValParam = parseNumber(params.get("time"));
+    const timeUnitParam = params.get("timeUnit");
+    const timeFrameParam = params.get("timeFrame");
     if (distance !== null) setDistanceValue(distance);
     if (accel !== null) setAccelerationValue(accel);
     if (mass !== null) setShipMassValue(mass);
@@ -383,6 +401,10 @@ export function Calculator() {
     if (assistSeqParam) {
       setAssistSequence(assistSeqParam.split(",").filter(Boolean));
     }
+    if (solveParam === "time") setSolveMode("time");
+    if (timeValParam !== null) setTargetTimeValue(timeValParam);
+    if (timeUnitParam) setTargetTimeUnit(timeUnitParam as any);
+    if (timeFrameParam) setTargetTimeFrame(timeFrameParam as any);
   }, []);
 
   function downloadFile(filename: string, content: string, mime: string) {
@@ -446,7 +468,11 @@ export function Calculator() {
       assistBody,
       assistAngle: String(assistAngle),
       assistMode,
-      assistSeq: assistSequence.join(",")
+      assistSeq: assistSequence.join(","),
+      solve: solveMode,
+      time: String(targetTimeValue),
+      timeUnit: targetTimeUnit,
+      timeFrame: targetTimeFrame
     });
     const url = `${window.location.origin}/calculator?${params.toString()}`;
     navigator.clipboard.writeText(url);
@@ -553,6 +579,62 @@ export function Calculator() {
                 </div>
               </div>
             </div>
+            <div className="flex flex-wrap items-center gap-3 text-xs text-white/60">
+              <span>Solve for:</span>
+              <button
+                type="button"
+                className={`rounded-full border px-3 py-1 uppercase tracking-widest ${
+                  solveMode === "distance" ? "border-star-500 text-star-500" : "border-white/20"
+                }`}
+                onClick={() => setSolveMode("distance")}
+              >
+                Distance
+              </button>
+              <button
+                type="button"
+                className={`rounded-full border px-3 py-1 uppercase tracking-widest ${
+                  solveMode === "time" ? "border-star-500 text-star-500" : "border-white/20"
+                }`}
+                onClick={() => setSolveMode("time")}
+              >
+                Time → Accel
+              </button>
+            </div>
+            {solveMode === "time" ? (
+              <div className="grid gap-3 md:grid-cols-3">
+                <div className="flex flex-col gap-2">
+                  <label>Target time</label>
+                  <input
+                    type="number"
+                    min="0.01"
+                    step="0.01"
+                    value={targetTimeValue}
+                    onChange={(event) => setTargetTimeValue(Number(event.target.value))}
+                  />
+                </div>
+                <div className="flex flex-col gap-2">
+                  <label>Unit</label>
+                  <select
+                    value={targetTimeUnit}
+                    onChange={(event) => setTargetTimeUnit(event.target.value as any)}
+                  >
+                    <option value="hours">hours</option>
+                    <option value="days">days</option>
+                    <option value="years">years</option>
+                  </select>
+                </div>
+                <div className="flex flex-col gap-2">
+                  <label>Frame</label>
+                  <select
+                    value={targetTimeFrame}
+                    onChange={(event) => setTargetTimeFrame(event.target.value as any)}
+                  >
+                    <option value="earth">Earth time</option>
+                    <option value="ship">Ship time</option>
+                  </select>
+                </div>
+              </div>
+            ) : null}
             {distanceMode === "ephemeris" ? (
               <div className="grid gap-3 rounded-2xl border border-white/10 p-3 text-xs text-white/70 md:grid-cols-[1fr_auto]">
                 <div className="flex flex-col gap-2">
@@ -979,6 +1061,14 @@ export function Calculator() {
                       {result.results.rapidity}
                     </p>
                   </div>
+                  {result.results.derivedAccelerationG ? (
+                    <div>
+                      <p className="text-xs uppercase tracking-widest text-white/50">Required accel</p>
+                      <p className="text-2xl font-semibold">
+                        {result.results.derivedAccelerationG} g
+                      </p>
+                    </div>
+                  ) : null}
                 </div>
               ) : (
                 <p className="mt-4 text-white/60">Run a simulation to see the results.</p>
