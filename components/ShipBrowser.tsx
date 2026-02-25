@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import Image from "next/image";
 
 type Ship = {
   id: string;
@@ -76,7 +77,7 @@ export function ShipBrowser({ ships, selectedId, onSelect, title }: ShipBrowserP
                   : "border-white/10 hover:border-white/30"
               }`}
             >
-              <img src={ship.image ?? "/ships/rocket.svg"} alt="ship" className="h-8 w-8" />
+              <Image src={ship.image ?? "/ships/rocket.svg"} alt="ship" width={32} height={32} className="h-8 w-8" unoptimized />
               <div>
                 <p className="text-sm font-semibold text-white">{ship.name}</p>
                 <p className="text-xs text-white/60">
@@ -89,10 +90,13 @@ export function ShipBrowser({ ships, selectedId, onSelect, title }: ShipBrowserP
         <div className="rounded-2xl border border-white/10 p-4">
           {selected ? (
             <div className="grid gap-3">
-              <img
+              <Image
                 src={selected.image ?? "/ships/rocket.svg"}
                 alt={selected.name}
+                width={96}
+                height={96}
                 className="h-24 w-24"
+                unoptimized
               />
               <div>
                 <p className="text-sm text-white/60">Mass</p>

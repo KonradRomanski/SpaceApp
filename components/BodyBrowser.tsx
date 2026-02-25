@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import type { Body } from "./TargetMap";
 import { getBodyIcon } from "../lib/icons";
 import { useVerified } from "./VerifiedProvider";
@@ -151,7 +152,7 @@ export function BodyBrowser({
                       : "border-white/10 hover:border-white/30"
                   }`}
                 >
-                  <img src={getBodyIcon(body)} alt="icon" className="h-8 w-8" />
+                  <Image src={getBodyIcon(body)} alt="icon" width={32} height={32} className="h-8 w-8" unoptimized />
                   <div>
                     <p className="text-sm font-semibold text-white">{body.name}</p>
                     <p className="text-xs text-white/60">{body.type}</p>
@@ -205,14 +206,17 @@ export function BodyBrowser({
                 </span>
               </div>
               {active?.image || selectedBody.imageOverride ? (
-                <img
-                  src={active?.image ?? selectedBody.imageOverride ?? ""}
+                <Image
+                  src={active?.image ?? selectedBody.imageOverride ?? "/stars/star.svg"}
                   alt={selectedBody.name}
+                  width={800}
+                  height={224}
                   className="h-28 w-full rounded-xl object-cover"
+                  unoptimized
                 />
               ) : (
                 <div className="flex h-36 items-center justify-center rounded-xl bg-space-800 text-xs text-white/50">
-                  <img src={getBodyIcon(selectedBody)} alt="icon" className="h-16 w-16" />
+                  <Image src={getBodyIcon(selectedBody)} alt="icon" width={64} height={64} className="h-16 w-16" unoptimized />
                 </div>
               )}
               <ExpandableText text={active?.description ?? selectedBody.description} collapsedLines={5} />

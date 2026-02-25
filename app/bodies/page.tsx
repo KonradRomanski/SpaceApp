@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import bodies from "../data/bodies.json";
 import ships from "../data/ships.json";
 import type { Body } from "../../components/TargetMap";
@@ -305,7 +306,7 @@ export default function BodiesPage() {
                 }`}
               >
                 <div className="flex items-center gap-3">
-                  <img src={getBodyIcon(body)} alt="icon" className="h-10 w-10" />
+                  <Image src={getBodyIcon(body)} alt="icon" width={40} height={40} className="h-10 w-10" unoptimized />
                   <div>
                     <h2 className="text-xl font-display text-star-500">{body.name}</h2>
                     <p className="text-xs uppercase tracking-widest text-white/60">{body.type}</p>

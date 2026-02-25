@@ -1,11 +1,11 @@
 import { NextResponse } from "next/server";
-import { create, all, MathJsStatic } from "mathjs";
+import { create, all, type MathJsStatic } from "mathjs";
 import { formatDuration } from "../../../lib/format";
 import { computeTimes, solveAcceleration } from "../../../lib/relativity";
 
 const math = create(all, { number: "BigNumber", precision: 64 }) as MathJsStatic;
 
-const C = math.bignumber("299792458");
+const C = 299792458;
 
 const DISTANCE_FACTORS: Record<string, number> = {
   ly: 9.4607304725808e15,
@@ -59,25 +59,14 @@ function formatFriendly(value: unknown) {
 }
 
 function compute(distanceMeters: number, accelerationMs2: number, shipMassKg: number) {
-  const d = math.bignumber(distanceMeters.toString());
-  const a = math.bignumber(accelerationMs2.toString());
-  const m = math.bignumber(shipMassKg.toString());
+  const term = (accelerationMs2 * distanceMeters) / (2 * C * C);
+  const phi = Math.acosh(1 + term);
 
-  const term = math.divide(
-    math.multiply(a, d),
-    math.multiply(2, math.pow(C, 2))
-  );
-  const phi = math.acosh(math.add(1, term));
+  const tau = ((2 * C) / accelerationMs2) * phi;
+  const T = ((2 * C) / accelerationMs2) * Math.sinh(phi);
+  const vmax = C * Math.tanh(phi);
 
-  const tau = math.multiply(math.divide(math.multiply(2, C), a), phi);
-  const T = math.multiply(math.divide(math.multiply(2, C), a), math.sinh(phi));
-  const vmax = math.multiply(C, math.tanh(phi));
-
-  const energy = math.multiply(
-    m,
-    math.pow(C, 2),
-    math.subtract(math.exp(math.multiply(2, phi)), 1)
-  );
+  const energy = shipMassKg * C * C * (Math.exp(2 * phi) - 1);
 
   return { phi, tau, T, vmax, energy };
 }

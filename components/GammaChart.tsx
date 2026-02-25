@@ -49,7 +49,10 @@ export function GammaChart({ chart }: { chart: ChartPayload }) {
           legend: { display: false },
           tooltip: {
             callbacks: {
-              label: (ctx) => `γ ${ctx.parsed.y.toFixed(3)}`
+              label: (ctx) => {
+                const y = typeof ctx.parsed.y === "number" ? ctx.parsed.y : 0;
+                return `γ ${y.toFixed(3)}`;
+              }
             }
           }
         },

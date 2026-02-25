@@ -17,6 +17,12 @@ export type Body = {
   imageOverride?: string;
   wikiTitleOverride?: string;
   wikiUrlOverride?: string;
+  radiusKm?: number;
+  massKg?: number;
+  gravityMs2?: number;
+  orbitalPeriodDays?: number;
+  moons?: number;
+  createdAt?: string;
 };
 
 type TargetMapProps = {

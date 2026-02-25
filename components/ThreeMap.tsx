@@ -1,8 +1,9 @@
 "use client";
 
 import { Canvas, useFrame } from "@react-three/fiber";
-import { OrbitControls, Html } from "@react-three/drei";
+import { OrbitControls, Html, Line as DreiLine } from "@react-three/drei";
 import { useEffect, useMemo, useRef } from "react";
+import Image from "next/image";
 import * as THREE from "three";
 import type { Body } from "./TargetMap";
 import { getBodyIcon } from "../lib/icons";
@@ -301,12 +302,7 @@ function OrbitRing({
       offset.z
     );
   });
-  const geometry = new THREE.BufferGeometry().setFromPoints(points);
-  return (
-    <line geometry={geometry}>
-      <lineBasicMaterial color={color} transparent opacity={0.6} />
-    </line>
-  );
+  return <DreiLine points={points} color={color} transparent opacity={0.6} />;
 }
 
 function AsteroidBelt({ radius }: { radius: number }) {
@@ -363,7 +359,7 @@ function BodyMarker({
           }`}
           onClick={() => onSelect(body)}
         >
-          <img src={icon} alt="icon" className="h-4 w-4" />
+          <Image src={icon} alt="icon" width={16} height={16} className="h-4 w-4" unoptimized />
           {body.name}
         </button>
       </Html>
@@ -430,7 +426,7 @@ function MoonMarker({
           }`}
           onClick={() => onSelect(body)}
         >
-          <img src={icon} alt="icon" className="h-4 w-4" />
+          <Image src={icon} alt="icon" width={16} height={16} className="h-4 w-4" unoptimized />
           {body.name}
         </button>
       </Html>
@@ -479,7 +475,7 @@ function SunMarker({
           }`}
           onClick={() => onSelect(body)}
         >
-          <img src={getBodyIcon(body)} alt="icon" className="h-4 w-4" />
+          <Image src={getBodyIcon(body)} alt="icon" width={16} height={16} className="h-4 w-4" unoptimized />
           {body.name}
         </button>
       </Html>

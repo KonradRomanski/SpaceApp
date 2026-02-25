@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 
 type Topic = {
   title: string;
@@ -39,7 +40,7 @@ export default function TopicPage({ params }: { params: { title: string } }) {
         </Link>
         <h1 className="text-4xl font-display text-gradient md:text-5xl">{topic.title}</h1>
         {topic.image ? (
-          <img src={topic.image} alt={topic.title} className="h-72 w-full rounded-3xl object-cover" />
+          <Image src={topic.image} alt={topic.title} width={1200} height={720} className="h-72 w-full rounded-3xl object-cover" unoptimized />
         ) : null}
         <p className="text-lg text-white/70">{topic.description}</p>
         {topic.wikiUrl ? (

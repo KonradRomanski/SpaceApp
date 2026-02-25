@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 
 type Fact = {
   date: string;
@@ -153,7 +154,7 @@ export default function FactsPage() {
             {facts.map((fact) => (
               <Link key={fact.date} href={`/facts/${fact.date}`} className="glass card">
                 {fact.image ? (
-                  <img src={fact.image} alt={fact.title} className="h-40 w-full rounded-2xl object-cover" />
+                  <Image src={fact.image} alt={fact.title} width={960} height={320} className="h-40 w-full rounded-2xl object-cover" unoptimized />
                 ) : (
                   <div className="h-40 rounded-2xl bg-space-800" />
                 )}
@@ -173,7 +174,7 @@ export default function FactsPage() {
                 className="glass card"
               >
                 {topic.image ? (
-                  <img src={topic.image} alt={topic.title} className="h-40 w-full rounded-2xl object-cover" />
+                  <Image src={topic.image} alt={topic.title} width={960} height={320} className="h-40 w-full rounded-2xl object-cover" unoptimized />
                 ) : (
                   <div className="h-40 rounded-2xl bg-space-800" />
                 )}

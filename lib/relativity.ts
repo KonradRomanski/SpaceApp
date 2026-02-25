@@ -1,23 +1,15 @@
-import { create, all, MathJsStatic } from "mathjs";
-
-const math = create(all, { number: "BigNumber", precision: 64 }) as MathJsStatic;
-const C = math.bignumber("299792458");
+const C = 299792458;
 
 function toNumberSafe(value: unknown) {
-  const num = Number(math.format(value, { notation: "auto" }));
+  const num = typeof value === "number" ? value : Number(value);
   return Number.isFinite(num) ? num : null;
 }
 
 export function computeTimes(distanceMeters: number, accelerationMs2: number) {
-  const d = math.bignumber(distanceMeters.toString());
-  const a = math.bignumber(accelerationMs2.toString());
-  const term = math.divide(
-    math.multiply(a, d),
-    math.multiply(2, math.pow(C, 2))
-  );
-  const phi = math.acosh(math.add(1, term));
-  const tau = math.multiply(math.divide(math.multiply(2, C), a), phi);
-  const T = math.multiply(math.divide(math.multiply(2, C), a), math.sinh(phi));
+  const term = (accelerationMs2 * distanceMeters) / (2 * C * C);
+  const phi = Math.acosh(1 + term);
+  const tau = ((2 * C) / accelerationMs2) * phi;
+  const T = ((2 * C) / accelerationMs2) * Math.sinh(phi);
   return { tau: toNumberSafe(tau), T: toNumberSafe(T) };
 }
 

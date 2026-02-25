@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import bodies from "../../data/bodies.json";
 import type { Body } from "../../../components/TargetMap";
 import { getBodyIcon } from "../../../lib/icons";
@@ -79,7 +80,7 @@ export default function BodyDetailPage({ params }: { params: { id: string } }) {
         </div>
         <header className="flex flex-col gap-4">
           <div className="flex items-center gap-3">
-            <img src={getBodyIcon(body)} alt="icon" className="h-12 w-12" />
+            <Image src={getBodyIcon(body)} alt="icon" width={48} height={48} className="h-12 w-12" unoptimized />
             <div>
               <p className="text-sm uppercase tracking-[0.3em] text-white/60">{body.type}</p>
               <h1 className="text-4xl font-display text-gradient md:text-5xl">{body.name}</h1>
@@ -89,7 +90,7 @@ export default function BodyDetailPage({ params }: { params: { id: string } }) {
         </header>
 
         {info?.image || body.imageOverride ? (
-          <img src={info?.image ?? body.imageOverride ?? ""} alt={body.name} className="h-64 w-full rounded-3xl object-cover" />
+          <Image src={info?.image ?? body.imageOverride ?? "/stars/star.svg"} alt={body.name} width={1200} height={640} className="h-64 w-full rounded-3xl object-cover" unoptimized />
         ) : null}
 
         <section className="glass card">

@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { useSearchParams } from "next/navigation";
 import bodies from "../data/bodies.json";
 import { ThreeMap } from "../../components/ThreeMap";
@@ -11,6 +12,7 @@ import { useVerified } from "../../components/VerifiedProvider";
 import type { Body } from "../../components/TargetMap";
 import { ExpandableText } from "../../components/ExpandableText";
 import { useToast } from "../../components/ToastProvider";
+export const dynamic = "force-dynamic";
 
 const groups = [
   { id: "planets", label: "Planets", filter: (b: Body) => b.type === "planet" },
@@ -43,7 +45,7 @@ function isPresent(value?: string | number | null) {
   return String(value).trim().length > 0;
 }
 
-export default function MapPage() {
+function MapPageContent() {
   const searchParams = useSearchParams();
   const { verified } = useVerified();
   const baseBodies = useMemo(() => bodies as Body[], []);
@@ -689,7 +691,7 @@ export default function MapPage() {
               <div className="mt-4 flex flex-col gap-4">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <img src={getBodyIcon(selected)} alt="icon" className="h-8 w-8" />
+                    <Image src={getBodyIcon(selected)} alt="icon" width={32} height={32} className="h-8 w-8" unoptimized />
                     <div>
                       <p className="text-lg font-display text-white">{selected.name}</p>
                       <p className="text-xs text-white/60 uppercase tracking-widest">{selected.type}</p>
@@ -700,7 +702,7 @@ export default function MapPage() {
                   </Link>
                 </div>
                 {info?.image || selected.imageOverride ? (
-                  <img src={info?.image ?? selected.imageOverride ?? ""} alt={selected.name} className="h-40 w-full rounded-xl object-cover" />
+                  <Image src={info?.image ?? selected.imageOverride ?? "/stars/star.svg"} alt={selected.name} width={960} height={320} className="h-40 w-full rounded-xl object-cover" unoptimized />
                 ) : (
                   <div className="flex h-40 items-center justify-center rounded-xl bg-space-800 text-xs text-white/50">
                     No image
@@ -782,5 +784,20 @@ export default function MapPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+
+export default function MapPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen px-6 pb-16 md:px-16">
+          <div className="mx-auto max-w-7xl py-8 text-white/70">Loading map...</div>
+        </div>
+      }
+    >
+      <MapPageContent />
+    </Suspense>
   );
 }

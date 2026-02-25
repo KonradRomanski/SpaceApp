@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 
 type Fact = {
   date: string;
@@ -44,7 +45,7 @@ export default function FactDetailPage({ params }: { params: { slug: string } })
         <p className="text-sm uppercase tracking-[0.3em] text-white/60">{fact.date}</p>
         <h1 className="text-4xl font-display text-gradient md:text-5xl">{fact.title}</h1>
         {fact.image ? (
-          <img src={fact.image} alt={fact.title} className="h-72 w-full rounded-3xl object-cover" />
+          <Image src={fact.image} alt={fact.title} width={1200} height={720} className="h-72 w-full rounded-3xl object-cover" unoptimized />
         ) : null}
         {fact.description ? (
           <p className="text-lg leading-relaxed text-white/70 whitespace-pre-line">

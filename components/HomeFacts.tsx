@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import Image from "next/image";
 
 type Fact = {
   date: string;
@@ -87,10 +88,13 @@ export function HomeFacts() {
       {active ? (
         <div className="mt-4 grid gap-4 md:grid-cols-[1fr_1.4fr]">
           {active.image ? (
-            <img
+            <Image
               src={active.image}
               alt="fact"
+              width={640}
+              height={288}
               className="h-36 w-full rounded-xl object-cover"
+              unoptimized
             />
           ) : (
             <div className="h-36 rounded-xl bg-space-800" />

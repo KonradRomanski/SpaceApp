@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 
 type GalleryItem = {
   nasaId: string;
@@ -94,7 +95,7 @@ export default function GalleryPage() {
           {items.map((item) => (
             <Link key={item.nasaId} href={`/gallery/${item.nasaId}`} className="glass card">
               {item.image ? (
-                <img src={item.image} alt={item.title} className="h-40 w-full rounded-2xl object-cover" />
+                <Image src={item.image} alt={item.title} width={960} height={320} className="h-40 w-full rounded-2xl object-cover" unoptimized />
               ) : (
                 <div className="h-40 rounded-2xl bg-space-800" />
               )}

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Image from "next/image";
 
 type GalleryItem = {
   nasaId: string;
@@ -72,7 +73,7 @@ export function HomeGallery() {
             className="rounded-2xl border border-white/10 p-3"
           >
             {item.image ? (
-              <img src={item.image} alt={item.title} className="h-32 w-full rounded-xl object-cover" />
+              <Image src={item.image} alt={item.title} width={640} height={256} className="h-32 w-full rounded-xl object-cover" unoptimized />
             ) : (
               <div className="h-32 rounded-xl bg-space-800" />
             )}

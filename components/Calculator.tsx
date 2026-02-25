@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import Image from "next/image";
 import bodies from "../app/data/bodies.json";
 import ships from "../app/data/ships.json";
 import {
@@ -135,7 +136,7 @@ export function Calculator() {
   const allBodies = useMemo(() => bodies as Body[], []);
 
   const selectedBody = selectedBodyId
-    ? allBodies.find((item) => item.id === selectedBodyId)
+    ? allBodies.find((item) => item.id === selectedBodyId) ?? null
     : null;
 
   const selectedShipData = ships.find((ship) => ship.id === selectedShip) ?? null;
@@ -838,7 +839,7 @@ export function Calculator() {
                           : "border-white/10 hover:border-white/30"
                       }`}
                     >
-                      <img src={ship.image ?? "/ships/rocket.svg"} alt="ship" className="h-8 w-8" />
+                      <Image src={ship.image ?? "/ships/rocket.svg"} alt="ship" width={32} height={32} className="h-8 w-8" unoptimized />
                       <div>
                         <p className="text-xs font-semibold text-white">{ship.name}</p>
                         <p className="text-[11px] text-white/60">{ship.maxAccelG} g</p>

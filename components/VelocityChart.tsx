@@ -46,7 +46,10 @@ export function VelocityChart({ chart }: { chart: ChartPayload }) {
           legend: { display: false },
           tooltip: {
             callbacks: {
-              label: (ctx) => `v/c ${ctx.parsed.y.toFixed(3)}`
+              label: (ctx) => {
+                const y = typeof ctx.parsed.y === "number" ? ctx.parsed.y : 0;
+                return `v/c ${y.toFixed(3)}`;
+              }
             }
           }
         },

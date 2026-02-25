@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import Image from "next/image";
 import { ExpandableText } from "./ExpandableText";
 import { useToast } from "./ToastProvider";
 
@@ -133,7 +134,7 @@ export function DiscoverPanel({ onAdd, existing = [] }: DiscoverPanelProps) {
                   >
                     <div className="flex items-center gap-3">
                       {item.image ? (
-                        <img src={item.image} alt={item.name} className="h-10 w-10 rounded-lg object-cover" />
+                        <Image src={item.image} alt={item.name} width={40} height={40} className="h-10 w-10 rounded-lg object-cover" unoptimized />
                       ) : (
                         <div className="h-10 w-10 rounded-lg bg-space-800" />
                       )}
@@ -201,7 +202,7 @@ export function DiscoverPanel({ onAdd, existing = [] }: DiscoverPanelProps) {
             {selected ? (
               <div className="space-y-3">
                 {selected.image ? (
-                  <img src={selected.image} alt={selected.name} className="h-40 w-full rounded-xl object-cover" />
+                  <Image src={selected.image} alt={selected.name} width={960} height={320} className="h-40 w-full rounded-xl object-cover" unoptimized />
                 ) : (
                   <div className="h-40 rounded-xl bg-space-800" />
                 )}

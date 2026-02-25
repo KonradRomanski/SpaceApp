@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 
 type GalleryItem = {
   nasaId: string;
@@ -41,7 +42,7 @@ export default function GalleryDetailPage({ params }: { params: { id: string } }
         </Link>
         <h1 className="text-4xl font-display text-gradient md:text-5xl">{item.title}</h1>
         {item.image ? (
-          <img src={item.image} alt={item.title} className="h-72 w-full rounded-3xl object-cover" />
+          <Image src={item.image} alt={item.title} width={1200} height={720} className="h-72 w-full rounded-3xl object-cover" unoptimized />
         ) : null}
         <p className="text-lg text-white/70">{item.description}</p>
         <div className="grid gap-3 text-sm text-white/60 md:grid-cols-2">
