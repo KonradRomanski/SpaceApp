@@ -1,15 +1,9 @@
 import { NextResponse } from "next/server";
 import { addExtraShips, listExtraShips } from "../../../lib/db";
-import seedShips from "../../data/ships.json";
 
 export async function GET() {
   const rows = await listExtraShips();
-  if (!rows.length) {
-    await addExtraShips(seedShips);
-  }
-  const seededRows = rows.length ? rows : await listExtraShips();
-  const sourceRows = seededRows.length ? seededRows : rows;
-  const items = sourceRows.map((row: any) => ({
+  const items = rows.map((row: any) => ({
     id: row.id,
     name: row.name,
     org: row.org ?? undefined,

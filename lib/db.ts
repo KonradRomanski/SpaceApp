@@ -1,146 +1,123 @@
-import { Pool } from "pg";
+import seedShips from "../app/data/ships.json";
 
-const connectionString = process.env.DATABASE_URL;
-if (!connectionString) {
-  throw new Error("DATABASE_URL is required");
+type ExtraBodyRow = {
+  id: string;
+  name: string;
+  type: string;
+  description: string | null;
+  image_override: string | null;
+  distance_ly: number | null;
+  distance_au: number | null;
+  semi_major_au: number | null;
+  created_at: string;
+};
+
+type ExtraShipRow = {
+  id: string;
+  name: string;
+  org: string | null;
+  mass_kg: number | null;
+  max_accel_g: number | null;
+  image: string | null;
+  note: string | null;
+  source_url: string | null;
+  created_at: string;
+};
+
+const extraBodies = new Map<string, ExtraBodyRow>();
+const extraShips = new Map<string, ExtraShipRow>();
+let shipsSeeded = false;
+
+function nowIso() {
+  return new Date().toISOString();
 }
 
-const pool = new Pool({ connectionString });
-let initialized = false;
+function byCreatedDesc<T extends { created_at: string }>(rows: T[]) {
+  return rows.sort((a, b) => b.created_at.localeCompare(a.created_at));
+}
 
-async function init() {
-  if (initialized) return;
-  await pool.query(`
-    CREATE TABLE IF NOT EXISTS extra_bodies (
-      id TEXT PRIMARY KEY,
-      name TEXT NOT NULL,
-      type TEXT NOT NULL,
-      description TEXT,
-      image_override TEXT,
-      distance_ly DOUBLE PRECISION,
-      distance_au DOUBLE PRECISION,
-      semi_major_au DOUBLE PRECISION,
-      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-    );
-    CREATE TABLE IF NOT EXISTS extra_ships (
-      id TEXT PRIMARY KEY,
-      name TEXT NOT NULL,
-      org TEXT,
-      mass_kg DOUBLE PRECISION,
-      max_accel_g DOUBLE PRECISION,
-      image TEXT,
-      note TEXT,
-      source_url TEXT,
-      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-    );
-  `);
-  initialized = true;
+function ensureSeedShips() {
+  if (shipsSeeded) return;
+  for (const ship of seedShips as any[]) {
+    if (!ship?.id || !ship?.name) continue;
+    extraShips.set(ship.id, {
+      id: ship.id,
+      name: ship.name,
+      org: ship.org ?? null,
+      mass_kg: ship.massKg ?? null,
+      max_accel_g: ship.maxAccelG ?? null,
+      image: ship.image ?? null,
+      note: ship.note ?? null,
+      source_url: ship.sourceUrl ?? null,
+      created_at: ship.createdAt ?? nowIso()
+    });
+  }
+  shipsSeeded = true;
 }
 
 export async function listExtraBodies() {
-  await init();
-  const { rows } = await pool.query(
-    "SELECT * FROM extra_bodies ORDER BY created_at DESC"
-  );
-  return rows;
+  return byCreatedDesc([...extraBodies.values()]);
 }
 
 export async function addExtraBodies(items: any[]) {
-  await init();
-  const now = new Date().toISOString();
-  const existing = await pool.query("SELECT name FROM extra_bodies");
   const existingNames = new Set(
-    existing.rows.map((row) => String(row.name).toLowerCase())
+    [...extraBodies.values()].map((row) => row.name.toLowerCase())
   );
 
-  const client = await pool.connect();
-  try {
-    await client.query("BEGIN");
-    for (const row of items) {
-      if (!row?.id || !row?.name) continue;
-      const normalized = String(row.name).toLowerCase();
-      if (existingNames.has(normalized)) continue;
-      await client.query(
-        `
-        INSERT INTO extra_bodies
-        (id, name, type, description, image_override, distance_ly, distance_au, semi_major_au, created_at)
-        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)
-        ON CONFLICT (id) DO NOTHING
-      `,
-        [
-          row.id,
-          row.name,
-          row.type,
-          row.description ?? null,
-          row.imageOverride ?? null,
-          row.distanceLy ?? null,
-          row.distanceAuFromEarthAvg ?? null,
-          row.semiMajorAxisAu ?? null,
-          row.createdAt ?? now
-        ]
-      );
-      existingNames.add(normalized);
-    }
-    await client.query("COMMIT");
-  } catch (error) {
-    await client.query("ROLLBACK");
-    throw error;
-  } finally {
-    client.release();
+  for (const row of items) {
+    if (!row?.id || !row?.name) continue;
+    const normalized = String(row.name).toLowerCase();
+    if (existingNames.has(normalized) || extraBodies.has(String(row.id))) continue;
+
+    extraBodies.set(String(row.id), {
+      id: String(row.id),
+      name: String(row.name),
+      type: String(row.type ?? "catalog"),
+      description: row.description ?? null,
+      image_override: row.imageOverride ?? null,
+      distance_ly: Number.isFinite(row.distanceLy) ? Number(row.distanceLy) : null,
+      distance_au: Number.isFinite(row.distanceAuFromEarthAvg)
+        ? Number(row.distanceAuFromEarthAvg)
+        : null,
+      semi_major_au: Number.isFinite(row.semiMajorAxisAu)
+        ? Number(row.semiMajorAxisAu)
+        : null,
+      created_at: row.createdAt ?? nowIso()
+    });
+
+    existingNames.add(normalized);
   }
 }
 
 export async function removeExtraBody(id: string) {
-  await init();
-  await pool.query("DELETE FROM extra_bodies WHERE id = $1", [id]);
+  extraBodies.delete(id);
 }
 
 export async function listExtraShips() {
-  await init();
-  const { rows } = await pool.query(
-    "SELECT * FROM extra_ships ORDER BY created_at DESC"
-  );
-  return rows;
+  ensureSeedShips();
+  return byCreatedDesc([...extraShips.values()]);
 }
 
 export async function addExtraShips(items: any[]) {
-  await init();
-  const now = new Date().toISOString();
-  const client = await pool.connect();
-  try {
-    await client.query("BEGIN");
-    for (const row of items) {
-      if (!row?.id || !row?.name) continue;
-      await client.query(
-        `
-        INSERT INTO extra_ships
-        (id, name, org, mass_kg, max_accel_g, image, note, source_url, created_at)
-        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)
-        ON CONFLICT (id) DO NOTHING
-      `,
-        [
-          row.id,
-          row.name,
-          row.org ?? null,
-          row.massKg ?? null,
-          row.maxAccelG ?? null,
-          row.image ?? null,
-          row.note ?? null,
-          row.sourceUrl ?? null,
-          row.createdAt ?? now
-        ]
-      );
-    }
-    await client.query("COMMIT");
-  } catch (error) {
-    await client.query("ROLLBACK");
-    throw error;
-  } finally {
-    client.release();
+  ensureSeedShips();
+  for (const row of items) {
+    if (!row?.id || !row?.name) continue;
+    if (extraShips.has(String(row.id))) continue;
+
+    extraShips.set(String(row.id), {
+      id: String(row.id),
+      name: String(row.name),
+      org: row.org ?? null,
+      mass_kg: Number.isFinite(row.massKg) ? Number(row.massKg) : null,
+      max_accel_g: Number.isFinite(row.maxAccelG) ? Number(row.maxAccelG) : null,
+      image: row.image ?? null,
+      note: row.note ?? null,
+      source_url: row.sourceUrl ?? null,
+      created_at: row.createdAt ?? nowIso()
+    });
   }
 }
 
 export async function removeExtraShip(id: string) {
-  await init();
-  await pool.query("DELETE FROM extra_ships WHERE id = $1", [id]);
+  extraShips.delete(id);
 }
